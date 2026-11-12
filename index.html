@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sand Shirts Photo Studio</title><meta name="theme-color" content="#0b5c8a"></head>
+<body style="margin:0;background:#f6efe2;font-family:Arial,sans-serif;color:#0b5c8a">
+<p id="m" style="text-align:center;margin-top:40vh;font-size:22px;font-weight:bold">Opening Sand Shirts Photo Studio…</p>
+<script>
+fetch('https://script.google.com/macros/s/AKfycbzyM9Pfm3mNLmVuZlnSfkamMASW2JqzirFkAAuUzVmdzupSWJwzmdkgNy6XR7MYLUwJ/exec?src=1',{credentials:'omit'})
+ .then(function(r){return r.text()})
+ .then(function(t){if(t.indexOf('Sand Shirts Photo Studio')<0)throw 0;document.open();document.write(t);document.close()})
+ .catch(function(){document.getElementById('m').textContent='Could not open the studio. Check your internet and refresh the page.'});
+</script>
+</body></html>
