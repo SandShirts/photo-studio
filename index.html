@@ -1,11 +1,425 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sand Shirts Photo Studio</title><meta name="theme-color" content="#0b5c8a"></head>
-<body style="margin:0;background:#f6efe2;font-family:Arial,sans-serif;color:#0b5c8a">
-<p id="m" style="text-align:center;margin-top:40vh;font-size:22px;font-weight:bold">Opening Sand Shirts Photo Studio…</p>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sand Shirts Photo Studio</title>
+<meta name="theme-color" content="#0b5c8a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photo Studio">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{--ink:#14202b;--ocean:#0b5c8a;--sand:#f6efe2;--line:#cdbb98;--ok:#1d7a3a;--warn:#b54708}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:17px;color:var(--ink);background:var(--sand)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 14px 4px;max-width:1100px;margin:0 auto}
+.top img{width:44px;height:44px;border-radius:10px}
+.top h1{margin:0;font-size:23px;color:var(--ocean)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 12px 80px}
+.card{background:#fff;border:2px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.bar{background:#d9eef7;color:#000;font-weight:bold;font-size:18px;padding:8px 12px;border-radius:8px;margin:-4px -4px 12px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mode{border:3px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center;font-weight:bold;cursor:pointer;background:#fffaf0;font-size:16px}
+.mode .e{font-size:30px;display:block;margin-bottom:4px}
+.mode.on{border-color:var(--ocean);background:#e3f2fa;color:var(--ocean)}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.slot{border:3px dashed var(--line);border-radius:10px;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;background:#fffdf8;position:relative;overflow:hidden;padding:6px}
+.slot img{max-width:100%;max-height:160px;border-radius:6px}
+.slot b{font-size:17px}.slot small{font-size:14px;color:#3d4b57;font-weight:bold}
+.slot .x{position:absolute;top:4px;right:4px;background:var(--warn);color:#fff;border:0;border-radius:6px;padding:4px 8px;font-weight:bold}
+label.l{display:block;font-weight:bold;font-size:15px;color:#000;margin:12px 0 5px}
+select,input[type=text]{width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:8px;background:#fff;color:#000}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);border-radius:20px;padding:8px 14px;font-weight:bold;cursor:pointer;background:#fffaf0;user-select:none}
+.chip.on{background:var(--ocean);border-color:var(--ocean);color:#fff}
+.btn{border:0;border-radius:10px;padding:13px 16px;font-size:17px;font-weight:bold;cursor:pointer}
+.go{background:var(--ocean);color:#fff;width:100%;font-size:21px;padding:18px}
+.go:disabled{background:#8aa9bb}
+.b2{background:#e3f2fa;color:var(--ocean);border:2px solid var(--ocean)}
+.b3{background:#fff4e5;color:var(--warn);border:2px solid var(--warn)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cost{font-weight:bold;color:#000;margin:0 0 10px;font-size:16px}
+/* picked tiles */
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pick{border:3px solid var(--ocean);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;text-align:center}
+.pick .ph{aspect-ratio:3/4;background:#eee center/cover no-repeat}
+.pick.sq .ph{aspect-ratio:1/1;background-size:contain;background-color:#fff}
+.pick .cap{padding:7px 6px 2px;font-weight:bold;font-size:15px;color:#000}
+.pick .chg{display:block;margin:6px auto 9px;background:var(--ocean);color:#fff;border-radius:8px;padding:6px 12px;font-weight:bold;font-size:15px;width:max-content}
+.pick .kind{font-size:13px;font-weight:bold;color:var(--ocean);padding-top:6px;text-transform:uppercase}
+/* picker sheet */
+.sheet{position:fixed;inset:0;background:#fff;z-index:60;display:flex;flex-direction:column}
+.sheet .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2px solid var(--line);background:#d9eef7}
+.sheet .hd h2{margin:0;font-size:21px;flex:1;color:#000}
+.sheet .tabs{display:flex;gap:8px;overflow-x:auto;padding:10px 12px;border-bottom:2px solid #eee;flex-shrink:0}
+.sheet .tabs .chip{white-space:nowrap}
+.sheet .body{overflow-y:auto;padding:12px;flex:1}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;max-width:1100px;margin:0 auto}
+.tile{border:3px solid #e2d6bd;border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;text-align:center}
+.tile .ph{aspect-ratio:3/4;background:#eee center/cover no-repeat}
+.tile.sq .ph{aspect-ratio:1/1;background-size:contain;background-color:#fff}
+.tile .cap{padding:7px 6px 9px;font-weight:bold;font-size:15px;color:#000;line-height:1.2}
+.tile.on{border-color:var(--ocean);box-shadow:0 0 0 3px #8ecae6}
+.tile.on .cap{background:var(--ocean);color:#fff}
+details.more{margin-top:4px}
+details.more summary{font-weight:bold;font-size:18px;color:var(--ocean);cursor:pointer;padding:6px 0}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.res{border:2px solid var(--line);border-radius:10px;padding:8px;background:#fff;position:relative}
+.res img,.res video{width:100%;border-radius:6px;display:block;background:#f2f2f2}
+.res .t{font-weight:bold;margin:6px 0}
+.res .row .btn{font-size:15px;padding:9px 10px}
+.res .busy{position:absolute;inset:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;border-radius:10px;padding:10px}
+.wait{display:flex;align-items:center;gap:14px;font-weight:bold;font-size:18px}
+.sun{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle,#ffd166 45%,#ffb703 46%);animation:spin 3s linear infinite;box-shadow:0 0 0 6px #ffe8a8;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wave{height:10px;background:repeating-linear-gradient(90deg,#8ecae6 0 20px,#219ebc 20px 40px);border-radius:6px;animation:wv 1.2s linear infinite;flex:1}
+@keyframes wv{to{background-position:40px 0}}
+.hide{display:none!important}
+.note{font-size:15px;color:#3d4b57;font-weight:bold}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:80;padding:12px}
+.modal .in{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto}
+.big{max-width:100%;max-height:70vh;display:block;margin:0 auto}
+.err{color:#b42318;font-weight:bold}
+@media(max-width:700px){.modes{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}.slot{min-height:115px}.top h1{font-size:20px}
+ .picks{grid-template-columns:repeat(2,1fr)}.tiles{grid-template-columns:repeat(3,1fr);gap:8px}.tile .cap{font-size:13px;padding:5px 3px 7px}}
+</style></head><body>
+
+<div class="top"><img src="icon-192.png" alt=""><h1>Sand Shirts Photo Studio</h1></div>
+<div class="wrap">
+
+<div class="card"><div class="bar">1. What do you want to make?</div><div class="modes" id="modes"></div></div>
+
+<div class="card"><div class="bar">2. Product & your photos</div>
+  <div class="picks" id="prodPick"></div>
+  <label class="l">Your photos (take them flat on the floor with your phone)</label>
+  <div class="slots">
+    <div class="slot" data-k="front"></div><div class="slot" data-k="back"></div><div class="slot" data-k="side"></div>
+  </div>
+  <input type="file" id="file" accept="image/*" class="hide">
+</div>
+
+<div class="card" id="viewsCard"><div class="bar">3. Angles & output</div>
+  <label class="l" style="margin-top:0">Which angles?</label><div class="chips" id="views"></div>
+  <label class="l">How do you want them?</label><div class="chips" id="outs"></div>
+</div>
+
+<div class="card"><div class="bar" id="lookTitle">4. Model & background</div>
+  <div class="picks" id="lookPick"></div>
+  <details class="more" id="more"><summary>More options ▾</summary>
+    <div class="grid">
+      <div><label class="l">Lighting</label><select id="light"></select></div>
+      <div class="mo"><label class="l">Bottoms / outfit</label><select id="bottoms"></select></div>
+      <div class="mo"><label class="l">Framing</label><select id="frame"></select></div>
+      <div class="mo"><label class="l">Expression</label><select id="mood"></select></div>
+      <div><label class="l">Photo size</label><select id="aspect"></select></div>
+      <div><label class="l">Versions of each</label><select id="vers"><option>1</option><option>2</option><option>3</option></select></div>
+    </div>
+    <label class="l">Anything else? (e.g. "holding a coffee", "team colors red and black")</label>
+    <input type="text" id="extra">
+    <div style="height:10px"></div>
+    <div class="row"><button class="btn b2" onclick="surprise()">🎲 Surprise me</button><button class="btn b2" onclick="savePreset()">★ Save this look</button>
+      <select id="presets" style="width:auto;flex:1;min-width:170px" onchange="loadPreset()"><option value="">My saved looks…</option></select></div>
+  </details>
+</div>
+
+<div class="card">
+  <div class="cost" id="cost"></div>
+  <button class="btn go" id="goBtn" onclick="generate()">MAKE PHOTOS</button>
+  <div id="status" class="hide" style="margin-top:14px"></div>
+</div>
+
+<div class="card" id="resCard"><div class="bar">Results</div>
+  <p class="note" style="margin-top:0">Every finished photo also saves to the Google Drive folder “Sand Shirts Photo Studio”. <a href="#" onclick="openFolder();return false">Open folder</a></p>
+  <div class="results" id="results"></div>
+</div>
+</div>
+
+<div id="sheet" class="sheet hide"><div class="hd"><h2 id="shTitle"></h2><button class="btn b3" onclick="closeSheet()">✕ Close</button></div><div class="tabs" id="shTabs"></div><div class="body"><div class="tiles" id="shTiles"></div></div></div>
+<div id="modal" class="modal hide"><div class="in" id="modalIn"></div></div>
+
+<script src="catalog.js"></script>
 <script>
-fetch('https://script.google.com/macros/s/AKfycbzyM9Pfm3mNLmVuZlnSfkamMASW2JqzirFkAAuUzVmdzupSWJwzmdkgNy6XR7MYLUwJ/exec?src=1',{credentials:'omit'})
- .then(function(r){return r.text()})
- .then(function(t){if(t.indexOf('Sand Shirts Photo Studio')<0)throw 0;document.open();document.write(t);document.close()})
- .catch(function(){document.getElementById('m').textContent='Could not open the studio. Check your internet and refresh the page.'});
-</script>
-</body></html>
+const API='https://script.google.com/macros/s/AKfycbzyM9Pfm3mNLmVuZlnSfkamMASW2JqzirFkAAuUzVmdzupSWJwzmdkgNy6XR7MYLUwJ/exec';
+const FAL_BILLING='https://fal.ai/dashboard/usage-billing/credits';
+const C=window.CAT;
+const $=id=>document.getElementById(id);
+const T=(k,w)=>C.ids[k]?`https://lh3.googleusercontent.com/d/${C.ids[k]}=w${w||360}`:'';
+const MODES=[{k:'ghost',e:'👕',t:'Ghost mannequin'},{k:'model',e:'🧍',t:'On a model'},{k:'flat',e:'🪵',t:'Flat lay'},{k:'video',e:'🎬',t:'Video'}];
+const OPT={
+ bottoms:['Blue jeans','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
+ frame:['Full body','Knees up','Waist up','Close-up on the print','Wide shot with scenery'],
+ mood:['Natural smile','Big laugh','Serious / confident','Calm / relaxed','Athletic focus','Looking away (no eye contact)'],
+ light:['Natural daylight','Golden hour sunset','Bright studio lighting','Soft overcast','Morning light','Moody evening','Night with neon lights','Flash street-style','Backlit sun flare'],
+ aspect:[['Portrait 4:5 (Instagram)','4:5'],['Square 1:1','1:1'],['Tall 3:4','3:4'],['Story / TikTok 9:16','9:16'],['Wide 16:9 (banner)','16:9']]
+};
+const VID_MOTIONS=['Slow 360° turn','Gentle breeze moving the fabric','Model walks toward the camera','Model turns to show the back','Camera slowly orbits around','Model smiles and adjusts the shirt','Slow zoom in on the print','Model jogs past the camera'];
+
+// lookups
+const PROD={};C.products.forEach(p=>PROD[p.k]=p);
+const MOD={};C.models.forEach(m=>MOD[m.k]=m);
+const POSE={};C.poses.forEach(p=>POSE[p.k]=p);
+const BGI={};Object.values(C.bgModel).flat().concat(C.textures,Object.values(C.flat).flat()).forEach(b=>BGI[b.k]=b);
+
+let S={mode:'ghost',prod:'pr-t-shirt',views:['front','back'],out:'collage',model:'w01',pose:'p01',
+  bg:{model:{c:'Sand'},ghost:{c:'White'},flat:{k:'f-a-light-wood-table'}}};
+let photos={};
+const isModel=()=>S.mode==='model'||S.mode==='video';
+const bgSlot=()=>isModel()?'model':S.mode;
+function curBg(){return S.bg[bgSlot()]}
+function bgName(b){return b.c?b.c+' backdrop':BGI[b.k].n}
+function swatch(name){const c=C.colors.find(x=>x[0]===name);return c?c[1]:'#fff'}
+function bgStyle(b){if(b.c){const s=swatch(b.c);return s.startsWith('linear')?`background-image:${s}`:`background:${s}`}return `background-image:url('${T(b.k)}')`}
+
+function fill(id,arr){$(id).innerHTML=arr.map(a=>Array.isArray(a)?`<option value="${a[1]}">${a[0]}</option>`:`<option>${a}</option>`).join('')}
+function init(){
+ $('modes').innerHTML=MODES.map(m=>`<div class="mode" data-k="${m.k}"><span class="e">${m.e}</span>${m.t}</div>`).join('');
+ document.querySelectorAll('.mode').forEach(e=>e.onclick=()=>setMode(e.dataset.k));
+ ['bottoms','frame','mood','light','aspect'].forEach(k=>fill(k,OPT[k]));
+ $('views').innerHTML=['front','back','side'].map(v=>`<div class="chip" data-v="${v}">${v.toUpperCase()}</div>`).join('');
+ document.querySelectorAll('#views .chip').forEach(c=>c.onclick=()=>{const v=c.dataset.v;S.views=S.views.includes(v)?S.views.filter(x=>x!==v):[...S.views,v];if(!S.views.length)S.views=['front'];paint()});
+ $('outs').innerHTML=[['collage','One collage (all angles in one photo)'],['separate','Separate photos'],['both','Both']].map(o=>`<div class="chip" data-o="${o[0]}">${o[1]}</div>`).join('');
+ document.querySelectorAll('#outs .chip').forEach(c=>c.onclick=()=>{S.out=c.dataset.o;paint()});
+ document.querySelectorAll('.slot').forEach(s=>{s.onclick=e=>{if(e.target.classList.contains('x'))return;pickPhoto(s.dataset.k)};
+  s.ondragover=e=>{e.preventDefault();s.style.borderColor='#0b5c8a'};s.ondragleave=()=>s.style.borderColor='';
+  s.ondrop=e=>{e.preventDefault();s.style.borderColor='';const f=e.dataTransfer.files[0];if(f)shrink(f,1600).then(d=>{photos[s.dataset.k]=d;showSlot(s.dataset.k)})};showSlot(s.dataset.k)});
+ ['vers','aspect'].forEach(k=>$(k).addEventListener('change',paint));
+ try{const last=JSON.parse(localStorage.getItem('ssLast')||'null');if(last)S=Object.assign(S,last)}catch(e){}
+ loadPresets();setMode(S.mode);
+}
+function remember(){try{localStorage.setItem('ssLast',JSON.stringify(S))}catch(e){}}
+function setMode(k){S.mode=k;document.querySelectorAll('.mode').forEach(e=>e.classList.toggle('on',e.dataset.k===k));
+ $('viewsCard').classList.toggle('hide',k==='flat'||k==='video');
+ document.querySelectorAll('.mo').forEach(e=>e.classList.toggle('hide',!isModel()));
+ $('lookTitle').textContent=(k==='flat'||k==='video'?'3':'4')+'. '+(isModel()?'Model, pose & background':'Background');
+ $('goBtn').textContent=k==='video'?'MAKE VIDEO':'MAKE PHOTOS';paint()}
+
+function tileHTML(kind,cap,style,sq,onclick){return `<div class="pick${sq?' sq':''}" onclick="${onclick}"><div class="kind">${kind}</div><div class="ph" style="${style}"></div><div class="cap">${cap}</div><span class="chg">Change</span></div>`}
+function paint(){
+ document.querySelectorAll('#views .chip').forEach(c=>c.classList.toggle('on',S.views.includes(c.dataset.v)));
+ document.querySelectorAll('#outs .chip').forEach(c=>c.classList.toggle('on',c.dataset.o===S.out));
+ const p=PROD[S.prod];
+ $('prodPick').innerHTML=tileHTML('Product',p.n,`background-image:url('${T(p.k)}')`,true,"openSheet('product')");
+ let h='';
+ if(isModel()){const m=MOD[S.model],ps=POSE[S.pose];
+  h+=tileHTML('Model',m.n+(m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,"openSheet('model')");
+  h+=tileHTML('Pose',ps.n,`background-image:url('${T(ps.k)}')`,false,"openSheet('pose')");}
+ const b=curBg();h+=tileHTML('Background',bgName(b),bgStyle(b),false,"openSheet('bg')");
+ $('lookPick').innerHTML=h;
+ const n=imgCount(),vid=S.mode==='video';
+ $('cost').textContent=vid?'This makes 1 photo + a 5-second video ≈ $0.78':`This makes ${n} photo${n>1?'s':''} ≈ $${(n*0.08).toFixed(2)}${(S.mode!=='flat'&&S.views.length>1&&S.out!=='separate')?' + a free collage':''}`;
+ remember();
+}
+function imgCount(){const v=+$('vers').value||1;if(S.mode==='flat'||S.mode==='video')return v;return S.views.length*v}
+
+// ---------- picker sheet ----------
+let SH=null;
+function openSheet(kind){
+ let title,tabs,items,sq=false,sel;
+ if(kind==='product'){title='Pick the product';tabs={All:C.products.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sq=true;sel=S.prod}
+ else if(kind==='model'){title='Pick a model';tabs={};C.models.forEach(m=>{(tabs[m.g]=tabs[m.g]||[]).push({k:m.k,n:m.n,img:T(m.k)})});sel=S.model}
+ else if(kind==='pose'){title='Pick a pose';tabs={All:C.poses.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sel=S.pose}
+ else{title='Pick a background';tabs={};const colors=C.colors.map(c=>({c:c[0],n:c[0],sw:c[1]}));
+  if(isModel()){tabs.Colors=colors;Object.entries(C.bgModel).forEach(([c,l])=>tabs[c]=l.map(b=>({k:b.k,n:b.n,img:T(b.k)})))}
+  else if(S.mode==='ghost'){tabs.Colors=colors;tabs.Textures=C.textures.map(b=>({k:b.k,n:b.n,img:T(b.k)}))}
+  else{Object.entries(C.flat).forEach(([c,l])=>tabs[c]=l.map(b=>({k:b.k,n:b.n,img:T(b.k)})));tabs.Colors=colors}
+  const b=curBg();sel=b.c||b.k}
+ const names=Object.keys(tabs);let tab=names[0];
+ for(const t of names)if(tabs[t].some(i=>(i.k||i.c)===sel)){tab=t;break}
+ SH={kind,tabs,sq,sel};$('shTitle').textContent=title;$('sheet').classList.remove('hide');document.body.style.overflow='hidden';showTab(tab);
+}
+function showTab(t){
+ $('shTabs').classList.toggle('hide',Object.keys(SH.tabs).length<2);
+ $('shTabs').innerHTML=Object.keys(SH.tabs).map(n=>`<div class="chip${n===t?' on':''}" onclick="showTab('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+ $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
+  return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div></div>`}).join('');
+ $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=()=>choose(SH.tabs[el.dataset.t][+el.dataset.i]));
+ $('sheet').querySelector('.body').scrollTop=0;
+}
+function choose(i){const k=SH.kind;
+ if(k==='product')S.prod=i.k;else if(k==='model')S.model=i.k;else if(k==='pose')S.pose=i.k;else S.bg[bgSlot()]=i.c?{c:i.c}:{k:i.k};
+ closeSheet();paint()}
+function closeSheet(){$('sheet').classList.add('hide');document.body.style.overflow=''}
+
+// ---------- photos ----------
+function pickPhoto(k){const f=$('file');f.value='';f.onchange=()=>{const file=f.files[0];if(!file)return;shrink(file,1600).then(d=>{photos[k]=d;showSlot(k)})};f.click()}
+function showSlot(k){const s=document.querySelector(`.slot[data-k="${k}"]`);const nm=k==='side'?'SIDE / DETAIL':k.toUpperCase();
+ s.innerHTML=photos[k]?`<img src="${photos[k]}"><b>${nm}</b><button class="x" onclick="photos['${k}']=null;showSlot('${k}')">✕</button>`:`<b>${nm}</b><small>tap to add${k==='front'?' (required)':' (optional)'}</small>`}
+function shrink(file,max){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height,s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.88))};im.src=r.result};r.readAsDataURL(file)})}
+
+// ---------- prompts ----------
+const v=id=>$(id).value;
+function keepLine(){return ' CRITICAL: keep every printed design, logo, lettering, graphic, color and print placement EXACTLY identical to the product reference photo(s) — do not redraw, restyle, misspell or move any text or artwork. Keep the garment color and fabric identical. Photorealistic, high-end e-commerce product photography, sharp focus, true-to-life colors.'}
+function refLine(refs){return ' Reference images: '+refs.map((r,i)=>`image ${i+1} = ${r}`).join('; ')+'. Use the product photos only for the product itself: completely remove the carpet, floor and room they were photographed on.'}
+function ghostPrompt(view,p,bgRef){
+ const g=p.g,n=p.pn,b=curBg();
+ const shape={apparel:'an invisible mannequin shape, natural 3D body volume, no wrinkles, no visible mannequin or person',
+  bottom:'an invisible mannequin shape with natural 3D leg volume, no wrinkles, no visible mannequin or person',
+  hat:'on an invisible head form with natural 3D shape',socks:'on invisible foot forms standing upright with natural 3D shape',
+  bag:'standing upright with natural 3D shape',flat:'neatly folded',hard:'a clean 3D product shot'}[g];
+ const where=b.c?`on a clean ${b.c.toLowerCase()} seamless studio background with a soft ground shadow`:`in front of the ${BGI[b.k].p} backdrop shown in reference image ${bgRef}, with a soft shadow`;
+ const vw={front:'Show the FRONT view, facing the camera'+(g==='apparel'?', with the inside of the back neckline visible':'')+'.',
+  back:'Show the BACK view, the product turned around so the back faces the camera.'+(photos.back?'':' No BACK photo was provided, so the back is plain fabric with NO print or graphic.'),
+  side:'Show a SIDE profile view (turned 90 degrees, sleeve toward the camera); the front print is only slightly visible at the edge.'}[view];
+ const lt=v('light');
+ return `Professional e-commerce ghost mannequin product photo of this exact ${n} (${shape}) ${where}.`+(lt==='Natural daylight'||lt==='Bright studio lighting'?'':` Lighting: ${lt.toLowerCase()}.`)+` ${vw}`;
+}
+function modelPrompt(view,p,modelRef,bgRef){
+ const n=p.pn,m=MOD[S.model],b=curBg(),grp=m.g==='Groups';
+ const vw={front:'Front view, the front print fully visible.',back:'Back view: turned away from the camera so the back of the garment is fully visible.'+(photos.back?' The back must match the BACK product photo exactly.':' No BACK photo was provided, so the back of the garment is plain fabric with NO print or graphic.'),side:'Side / three-quarter view.'}[view];
+ const who=grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
+ const verb=p.g==='hat'||p.g==='apparel'||p.g==='bottom'?'wearing':p.g==='socks'?'wearing, with sneakers and shorts,':p.g==='bag'?'carrying':'holding';
+ const bottoms=p.g==='apparel'?`, paired with ${v('bottoms').toLowerCase()}`:'';
+ const where=b.c?`a clean ${b.c.toLowerCase()} seamless studio backdrop`:`the location shown in reference image ${bgRef} (${BGI[b.k].p})`;
+ return `Photorealistic lifestyle fashion photo of ${who}, ${grp?'all ':''}${verb} this exact ${n}${bottoms}. Ignore the plain white t-shirt and jeans in the person reference — dress them in the product instead. Pose: ${POSE[S.pose].p}${view==='back'?' (turned so the back faces the camera)':''}. Expression: ${v('mood').toLowerCase()}. ${vw} Framing: ${v('frame').toLowerCase()}. Setting: ${where}. Lighting: ${v('light').toLowerCase()}. The ${n} fits naturally and realistically.`;
+}
+function flatPrompt(p,bgRef){const b=curBg();const where=b.c?`a plain ${b.c.toLowerCase()} surface`:`the surface shown in reference image ${bgRef} (${BGI[b.k].p})`;
+ return `Professional styled flat-lay product photo of this exact ${p.pn}, laid out neatly and wrinkle-free, shot from directly above, on ${where}. Lighting: ${v('light').toLowerCase()}.`}
+
+function buildJobs(){
+ const p=PROD[S.prod];const keys=['front','back','side'].filter(k=>photos[k]);
+ const arr=keys.map(k=>photos[k]);const refs=keys.map(k=>`the ${k.toUpperCase()} of the product`);
+ let modelRef=0,bgRef=0;
+ if(isModel()){arr.push('drive:'+C.ids[S.model]);refs.push('the MODEL (person/people) to use');modelRef=arr.length}
+ const b=curBg();if(b.k){arr.push('drive:'+C.ids[b.k]);refs.push(isModel()?'the BACKGROUND LOCATION (empty scene)':S.mode==='flat'?'the SURFACE to lay the product on':'the BACKDROP');bgRef=arr.length}
+ const idx=arr.map((x,i)=>i);const extra=v('extra').trim();const tail=refLine(refs)+(extra?' Also: '+extra+'.':'')+keepLine();
+ const vers=+v('vers')||1,aspect=v('aspect');const jobs=[];
+ if(S.mode==='flat'||S.mode==='video'){for(let i=0;i<(S.mode==='video'?1:vers);i++)jobs.push({label:S.mode==='video'?'Video still':'Flat lay'+(vers>1?' #'+(i+1):''),view:'front',ver:i,prompt:(S.mode==='flat'?flatPrompt(p,bgRef):modelPrompt('front',p,modelRef,bgRef))+tail,imgs:idx,aspect})}
+ else{for(let i=0;i<vers;i++)['front','back','side'].filter(x=>S.views.includes(x)).forEach(view=>jobs.push({label:view.toUpperCase()+(vers>1?' #'+(i+1):''),view,ver:i,prompt:(S.mode==='ghost'?ghostPrompt(view,p,bgRef):modelPrompt(view,p,modelRef,bgRef))+tail,imgs:idx,aspect}))}
+ return {arr,jobs};
+}
+
+// ---------- server ----------
+async function run(fn,...a){let last;for(let i=0;i<3;i++){try{const r=await fetch(API,{method:'POST',body:JSON.stringify({fn,args:a}),credentials:'omit'});const j=await r.json();if(!j.ok)throw Object.assign(new Error(j.error),{fatal:true});return j.result}catch(e){last=e;if(e.fatal)throw e;await sleep(1500)}}throw last}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function niceErr(e){const m=(e&&e.message)||String(e);
+ if(/OUT_OF_CREDIT/.test(m))return `The studio is out of photo credit. Auto-refill usually adds more within a few minutes — try again shortly. If it keeps happening, <a href="${FAL_BILLING}" target="_blank">tap here to add credit</a>.`;
+ return 'Problem: '+m}
+let busy=false;
+function setStatus(html){$('status').classList.remove('hide');$('status').innerHTML=html}
+function waitPic(msg){return `<div class="wait"><div class="sun"></div><div style="flex:1">${msg}<div style="height:8px"></div><div class="wave"></div></div></div>`}
+
+async function submitAndWait(arr,jobs,msg,onProgress){
+ const sub=await run('submitImages','',arr,jobs);const bad=sub.find(s=>s.error);if(bad)throw new Error(bad.error);
+ return poll(sub,msg,onProgress);
+}
+async function generate(){
+ if(busy)return;if(!photos.front){alert2('Add a FRONT photo first.');return}
+ busy=true;$('goBtn').disabled=true;
+ const {arr,jobs}=buildJobs();const stamp=new Date().toLocaleString();const mode=S.mode;
+ try{
+  setStatus(waitPic(`Sending ${jobs.length} photo${jobs.length>1?'s':''} to the studio…`));
+  const done=await submitAndWait(arr,jobs,`Making your ${mode==='ghost'?'ghost mannequin':mode==='model'?'model':mode==='flat'?'flat lay':'video'} photo${jobs.length>1?'s':''}… (about 20–40 seconds)`);
+  const items=jobs.map((j,i)=>({...j,url:done[i].url,err:done[i].error}));
+  const good=items.filter(i=>i.url);
+  if(!good.length)throw new Error(items[0].err||'The studio could not make that one. Try again.');
+  const group=document.createElement('div');group.style.gridColumn='1/-1';
+  group.innerHTML=`<div class="note" style="margin-top:6px">${PROD[S.prod].n} · ${MODES.find(m=>m.k===mode).t} · ${stamp}</div><div class="results gi"></div>`;
+  $('results').prepend(group);
+  const ctx={arr,mode,prod:S.prod};
+  if(mode==='video'){setStatus(waitPic('Photo done — now filming the 5-second video… (1–3 minutes, keep this screen open)'));await makeVideo(good[0].url,group);}
+  else{
+   const versions=[...new Set(items.map(g=>g.ver||0))];
+   const multi=mode!=='flat'&&S.views.length>1,wantCollage=multi&&S.out!=='separate',wantSep=!multi||S.out!=='collage';
+   for(const ver of versions){const set=items.filter(g=>(g.ver||0)===ver),okN=set.filter(s=>s.url).length;
+    if(wantCollage&&okN>1){setStatus(waitPic('Putting together your collage…'));await addCollage(group,set,ctx,versions.length>1?ver+1:0)}
+    set.forEach(g=>{if(wantSep||okN<2||!g.url)addCard(group,g,ctx)})}
+  }
+  setStatus(`<div class="wait" style="color:var(--ok)">✔ Done — scroll down to your results. Don't like one? Tap 🔁 Redo on it.</div>`);
+  $('resCard').scrollIntoView({behavior:'smooth'});
+ }catch(e){setStatus(`<p class="err">${niceErr(e)}</p>`)}
+ busy=false;$('goBtn').disabled=false;
+}
+async function poll(sub,msg,onProgress){
+ const out=sub.map(()=>null);let t=0;
+ while(out.some(o=>!o)&&t<200){await sleep(3000);t++;
+  const pend=sub.map((s,i)=>[s,i]).filter(([s,i])=>!out[i]);
+  let r;try{r=await run('checkJobs','',pend.map(p=>p[0]))}catch(e){continue}
+  r.forEach((x,k)=>{const i=pend[k][1];if(x.state==='DONE')out[i]={url:x.url};else if(x.state==='FAILED')out[i]={error:x.error}});
+  const n=out.filter(Boolean).length;if(msg)setStatus(waitPic(`${msg}<br>${n} of ${sub.length} ready`));
+ }
+ return out.map(o=>o||{error:'Timed out'});
+}
+function fname(prod,mode,l){return `${PROD[prod].n.replace(/[^\w]+/g,'-')}_${mode}_${l.replace(/[^\w]+/g,'-')}_${Date.now()}`}
+async function collage(datas){
+ const ims=await Promise.all(datas.map(d=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=d})));
+ const H=Math.min(...ims.map(i=>i.height)),pad=Math.round(H*0.03);
+ const ws=ims.map(i=>Math.round(i.width*H/i.height));const W=ws.reduce((a,b)=>a+b,0)+pad*(ims.length+1);
+ const c=document.createElement('canvas');c.width=W;c.height=H+pad*2;const x=c.getContext('2d');
+ const t=document.createElement('canvas');t.width=t.height=1;const tx=t.getContext('2d');tx.drawImage(ims[0],2,2,1,1,0,0,1,1);const px=tx.getImageData(0,0,1,1).data;
+ x.fillStyle=`rgb(${px[0]},${px[1]},${px[2]})`;x.fillRect(0,0,W,c.height);
+ let cx=pad;ims.forEach((im,i)=>{x.drawImage(im,cx,pad,ws[i],H);cx+=ws[i]+pad});
+ return c.toDataURL('image/jpeg',0.92);
+}
+function cardShell(group,label,src,extraBtns){
+ const d=document.createElement('div');d.className='res';
+ d.innerHTML=`<div class="t">${label}</div><img src="${src}"><div class="row" style="margin-top:8px"><button class="btn b2 dl">⬇ Download</button><button class="btn b2 vw">🔍 View</button>${extraBtns}</div><div class="note sv">Saving to Drive…</div>`;
+ group.querySelector('.gi').appendChild(d);return d}
+function saveTo(d,o,isData){d.querySelector('.sv').textContent='Saving to Drive…';
+ (isData?run('saveDataUri','',o.name+'.jpg',o.data):run('saveUrl','',o.name+'.png',o.url)).then(u=>{o.drive=u;d.querySelector('.sv').innerHTML=`✔ Saved to Drive · <a href="${u}" target="_blank">open</a>`}).catch(()=>{d.querySelector('.sv').textContent='(Drive save failed — use Download)'})}
+function busyOn(d,msg){const b=document.createElement('div');b.className='busy';b.innerHTML=waitPic(msg);d.appendChild(b);return b}
+async function redoJob(ctx,job){const r=await submitAndWait(ctx.arr,[job],null);if(!r[0].url)throw new Error(r[0].error||'Redo failed');return r[0].url}
+
+function addCard(group,job,ctx){
+ if(!job.url){group.querySelector('.gi').insertAdjacentHTML('beforeend',`<div class="res"><div class="t">${job.label}</div><p class="err">This one didn't come out.</p><button class="btn b2 rd">🔁 Try again</button></div>`);
+  const d=group.querySelector('.gi').lastElementChild;d.querySelector('.rd').onclick=async()=>{const b=busyOn(d,'Making it again…');try{job.url=await redoJob(ctx,job);d.remove();addCard(group,job,ctx)}catch(e){b.remove();alert2(niceErr(e))}};return}
+ const o={url:job.url,name:fname(ctx.prod,ctx.mode,job.label)};
+ const d=cardShell(group,job.label,job.url,`<button class="btn b2 rd">🔁 Redo</button><button class="btn b3 vd">🎬 Video</button>`);
+ d.querySelector('.dl').onclick=()=>download(o,false);d.querySelector('.vw').onclick=()=>view(o.url,o);d.querySelector('.vd').onclick=()=>videoDialog(o,group);
+ d.querySelector('.rd').onclick=async()=>{const b=busyOn(d,'Making a new version…');try{const u=await redoJob(ctx,job);job.url=o.url=u;o.name=fname(ctx.prod,ctx.mode,job.label);d.querySelector('img').src=u;saveTo(d,o,false)}catch(e){alert2(niceErr(e))}b.remove()};
+ saveTo(d,o,false);
+}
+async function addCollage(group,set,ctx,num){
+ const parts=set.filter(s=>s.url);
+ const make=async()=>collage(await run('fetchAsDataUris','',parts.map(s=>s.url)));
+ const o={data:await make(),name:fname(ctx.prod,ctx.mode,'collage')};
+ const redoBtns=parts.map((s,i)=>`<button class="btn b2 rp" data-i="${i}">🔁 Redo ${s.view.toUpperCase()}</button>`).join('');
+ const d=cardShell(group,'COLLAGE'+(num?' #'+num:''),o.data,redoBtns);
+ d.querySelector('.dl').onclick=()=>download(o,true);d.querySelector('.vw').onclick=()=>view(o.data,o);
+ d.querySelectorAll('.rp').forEach(btn=>btn.onclick=async()=>{const s=parts[+btn.dataset.i];const b=busyOn(d,`Redoing the ${s.view.toUpperCase()}…`);
+  try{s.url=await redoJob(ctx,s);o.data=await make();o.name=fname(ctx.prod,ctx.mode,'collage');d.querySelector('img').src=o.data;saveTo(d,o,true)}catch(e){alert2(niceErr(e))}b.remove()});
+ saveTo(d,o,true);
+}
+async function download(o,isData){
+ try{const data=isData?o.data:(await run('fetchAsDataUris','',[o.url]))[0];
+  const a=document.createElement('a');a.href=data;a.download=o.name+(isData?'.jpg':'.png');document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>{if(o.drive)alert2(`If nothing downloaded on your phone: tap <b>View</b> and press-and-hold the picture to save it, or <a href="${o.drive}" target="_blank">open it in Google Drive</a>.`)},1500);
+ }catch(e){view(isData?o.data:o.url,o)}
+}
+function view(src,o){$('modalIn').innerHTML=`<img class="big" src="${src}"><p class="note">On a phone: press and hold the picture → Save / Download image.</p><div class="row">${o&&o.drive?`<a class="btn b2" href="${o.drive}" target="_blank">Open in Drive</a>`:''}<button class="btn go" style="width:auto" onclick="closeM()">Close</button></div>`;$('modal').classList.remove('hide')}
+function closeM(){$('modal').classList.add('hide')}
+function alert2(h){$('modalIn').innerHTML=`<p style="font-size:18px">${h}</p><button class="btn go" onclick="closeM()">OK</button>`;$('modal').classList.remove('hide')}
+function videoDialog(o,group){
+ $('modalIn').innerHTML=`<h3 style="margin-top:0">Make a video from this photo</h3><label class="l">Motion</label><select id="vm">${VID_MOTIONS.map(m=>`<option>${m}</option>`).join('')}</select><label class="l">Length</label><select id="vs"><option value="5">5 seconds (≈ $0.70)</option><option value="8">8 seconds (≈ $1.12)</option><option value="10">10 seconds (≈ $1.40)</option></select><div style="height:12px"></div><div class="row"><button class="btn go" style="width:auto" id="vgo">MAKE VIDEO</button><button class="btn b3" onclick="closeM()">Cancel</button></div>`;
+ $('modal').classList.remove('hide');$('vgo').onclick=async()=>{const m=$('vm').value,s=$('vs').value;closeM();setStatus(waitPic('Filming your video… (1–3 minutes, keep this screen open)'));try{await makeVideo(o.url,group,m,s);setStatus(`<div class="wait" style="color:var(--ok)">✔ Video done.</div>`)}catch(e){setStatus(`<p class="err">${niceErr(e)}</p>`)}};
+}
+async function makeVideo(url,group,motion,secs){
+ motion=motion||$('extra').value||'Gentle breeze moving the fabric';
+ const prompt=`${motion}. Smooth, realistic, professional product video. Keep the printed design, logo and text on the garment perfectly sharp and unchanged throughout.`;
+ const s=await run('submitVideo','',url,prompt,secs||5);if(s.error)throw new Error(s.error);
+ const [r]=await poll([s],'Filming your video… (1–3 minutes, keep this screen open)');if(!r.url)throw new Error(r.error||'Video failed');
+ const d=document.createElement('div');d.className='res';const name=fname(S.prod,'video','video');
+ d.innerHTML=`<div class="t">VIDEO</div><video src="${r.url}" controls playsinline loop muted autoplay></video><div class="row" style="margin-top:8px"><a class="btn b2" href="${r.url}" target="_blank">⬇ Open / Download</a></div><div class="note sv">Saving to Drive…</div>`;
+ group.querySelector('.gi').appendChild(d);run('saveUrl','',name+'.mp4',r.url).then(u=>d.querySelector('.sv').innerHTML=`✔ Saved to Drive · <a href="${u}" target="_blank">open</a>`).catch(()=>d.querySelector('.sv').textContent='');
+}
+function openFolder(){run('folderUrl','').then(u=>{$('modalIn').innerHTML=`<p style="font-size:18px">Your photos folder:</p><a class="btn go" style="display:block;text-align:center;text-decoration:none" href="${u}" target="_blank">Open Google Drive folder</a><div style="height:8px"></div><button class="btn b3" onclick="closeM()">Close</button>`;$('modal').classList.remove('hide')})}
+
+// ---------- surprise / saved looks ----------
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function surprise(){
+ if(isModel()){const adults=C.models.filter(m=>m.g==='Women'||m.g==='Men');S.model=rnd(adults).k;S.pose=rnd(C.poses).k;
+  const all=Object.values(C.bgModel).flat();S.bg.model=Math.random()<.85?{k:rnd(all).k}:{c:rnd(C.colors)[0]};
+  ['bottoms','mood','light'].forEach(k=>{const s=$(k);s.selectedIndex=Math.floor(Math.random()*s.options.length)})}
+ else if(S.mode==='ghost'){S.bg.ghost=Math.random()<.6?{c:rnd(C.colors)[0]}:{k:rnd(C.textures).k}}
+ else{S.bg.flat={k:rnd(Object.values(C.flat).flat()).k}}
+ paint()}
+const PKEYS=['bottoms','frame','mood','light','aspect','vers','extra'];
+function store(){try{return JSON.parse(localStorage.getItem('ssLooks2')||'{}')}catch(e){return{}}}
+function loadPresets(){const s=store();$('presets').innerHTML='<option value="">My saved looks…</option>'+Object.keys(s).map(k=>`<option>${k}</option>`).join('')}
+function savePreset(){$('modalIn').innerHTML=`<label class="l">Name this look</label><input type="text" id="pname" placeholder="e.g. Gym guy on the track"><div style="height:10px"></div><div class="row"><button class="btn go" style="width:auto" id="psave">Save</button><button class="btn b3" onclick="closeM()">Cancel</button></div>`;$('modal').classList.remove('hide');
+ $('psave').onclick=()=>{const n=$('pname').value.trim();if(!n)return;const s=store();s[n]={S:JSON.parse(JSON.stringify(S)),...Object.fromEntries(PKEYS.map(k=>[k,v(k)]))};try{localStorage.setItem('ssLooks2',JSON.stringify(s))}catch(e){}loadPresets();closeM()}}
+function loadPreset(){const n=$('presets').value;if(!n)return;const p=store()[n];if(!p)return;S=Object.assign(S,p.S);PKEYS.forEach(k=>{$(k).value=p[k]});setMode(S.mode)}
+init();
+</script></body></html>
