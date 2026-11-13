@@ -261,14 +261,14 @@ function ghostPrompt(view,p,bgRef){
   bag:'standing upright with natural 3D shape',flat:'neatly folded',hard:'a clean 3D product shot'}[g];
  const where=b.c?`on a clean ${b.c.toLowerCase()} seamless studio background with a soft ground shadow`:`in front of the ${BGI[b.k].p} backdrop shown in reference image ${bgRef}, with a soft shadow`;
  const vw={front:'Show the FRONT view, facing the camera'+(g==='apparel'?', with the inside of the back neckline visible':'')+'.',
-  back:'Show the BACK view, the product turned around so the back faces the camera.',
+  back:'Show the BACK view, the product turned around so the back faces the camera.'+(photos.back?'':' No BACK photo was provided, so the back is plain fabric with NO print or graphic.'),
   side:'Show a SIDE profile view (turned 90 degrees, sleeve toward the camera); the front print is only slightly visible at the edge.'}[view];
  const lt=v('light');
  return `Professional e-commerce ghost mannequin product photo of this exact ${n} (${shape}) ${where}.`+(lt==='Natural daylight'||lt==='Bright studio lighting'?'':` Lighting: ${lt.toLowerCase()}.`)+` ${vw}`;
 }
 function modelPrompt(view,p,modelRef,bgRef){
  const n=p.pn,m=MOD[S.model],b=curBg(),grp=m.g==='Groups';
- const vw={front:'Front view, the front print fully visible.',back:'Back view: turned away from the camera so the BACK print is fully visible.',side:'Side / three-quarter view.'}[view];
+ const vw={front:'Front view, the front print fully visible.',back:'Back view: turned away from the camera so the back of the garment is fully visible.'+(photos.back?' The back must match the BACK product photo exactly.':' No BACK photo was provided, so the back of the garment is plain fabric with NO print or graphic.'),side:'Side / three-quarter view.'}[view];
  const who=grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
  const verb=p.g==='hat'||p.g==='apparel'||p.g==='bottom'?'wearing':p.g==='socks'?'wearing, with sneakers and shorts,':p.g==='bag'?'carrying':'holding';
  const bottoms=p.g==='apparel'?`, paired with ${v('bottoms').toLowerCase()}`:'';
