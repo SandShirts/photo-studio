@@ -225,7 +225,8 @@ function paint(){
  const b=curBg();h+=tileHTML('Background',bgName(b),bgStyle(b),false,"openSheet('bg')");
  $('lookPick').innerHTML=h;
  const n=imgCount(),vid=S.mode==='video';
- $('cost').textContent=vid?'This makes 1 photo + a 5-second video ≈ $0.78':`This makes ${n} photo${n>1?'s':''} ≈ $${(n*0.08).toFixed(2)}${(S.mode!=='flat'&&effViews().length>1&&S.out!=='separate')?' + a free collage':''}`;
+ const each=isModel()&&MOD[S.model]&&MOD[S.model].real?0.15:0.08;
+ $('cost').textContent=vid?'This makes 1 photo + a 5-second video ≈ $0.78':`This makes ${n} photo${n>1?'s':''} ≈ $${(n*each).toFixed(2)}${(S.mode!=='flat'&&effViews().length>1&&S.out!=='separate')?' + a free collage':''}`;
  remember();
 }
 function imgCount(){const v=+$('vers').value||1;if(S.mode==='flat'||S.mode==='video')return v;return effViews().length*v}
@@ -309,13 +310,15 @@ function buildJobs(){
  const arr=keys.map(k=>photos[k]);const refs=keys.map(k=>`the ${k.toUpperCase()} of the product`);
  let modelRef=0,bgRef=0;
  if(isModel()){const m=MOD[S.model];
-  if(m.real){const a=arr.length+1;m.face.slice(0,3).forEach(id=>{arr.push('drive:'+id);refs.push('a close-up of the real person\'s FACE')});m.body.slice(0,4).forEach(id=>{arr.push('drive:'+id);refs.push('a full-length photo of the real person\'s BODY')});modelRef=`${a} to ${arr.length}`}
+  if(m.real){const a=arr.length+1;const bd=m.body.length>2?[m.body[0],m.body[m.body.length-1]]:m.body;m.face.slice(0,2).forEach(id=>{arr.push('drive:'+id);refs.push('a close-up of the real person\'s FACE')});bd.forEach(id=>{arr.push('drive:'+id);refs.push('a full-length photo of the real person\'s BODY (ignore the clothes, use only the body shape)')});modelRef=`${a} to ${arr.length}`}
   else{arr.push('drive:'+C.ids[S.model]);refs.push('the MODEL (person/people) to use');modelRef=arr.length}}
  const b=curBg();if(b.k){arr.push('drive:'+C.ids[b.k]);refs.push(isModel()?'the BACKGROUND LOCATION (empty scene)':S.mode==='flat'?'the SURFACE to lay the product on':'the BACKDROP');bgRef=arr.length}
  const idx=arr.map((x,i)=>i);const extra=v('extra').trim();const tail=refLine(refs)+(extra?' Also: '+extra+'.':'')+keepLine();
- const vers=+v('vers')||1,aspect=v('aspect');const jobs=[];
- if(S.mode==='flat'||S.mode==='video'){const fv=photos.front?'front':(effViews()[0]||'front');for(let i=0;i<(S.mode==='video'?1:vers);i++)jobs.push({label:S.mode==='video'?'Video still':'Flat lay'+(vers>1?' #'+(i+1):''),view:fv,ver:i,prompt:(S.mode==='flat'?flatPrompt(p,bgRef):modelPrompt(fv,p,modelRef,bgRef))+tail,imgs:idx,aspect})}
- else{for(let i=0;i<vers;i++)['front','back','side'].filter(x=>effViews().includes(x)).forEach(view=>jobs.push({label:view.toUpperCase()+(vers>1?' #'+(i+1):''),view,ver:i,prompt:(S.mode==='ghost'?ghostPrompt(view,p,bgRef):modelPrompt(view,p,modelRef,bgRef))+tail,imgs:idx,aspect}))}
+ const tail2=()=>tail+prodLine;
+ const vers=+v('vers')||1,aspect=v('aspect');const jobs=[];const pro=isModel()&&MOD[S.model]&&MOD[S.model].real;
+ const prodLine=keys.length?` The product to copy is shown in reference image${keys.length>1?'s 1 to '+keys.length:' 1'}: reproduce its printed artwork, characters, logos and every word and number of text EXACTLY as photographed — do not invent, simplify or replace any part of the design.`:'';
+ if(S.mode==='flat'||S.mode==='video'){const fv=photos.front?'front':(effViews()[0]||'front');for(let i=0;i<(S.mode==='video'?1:vers);i++)jobs.push({label:S.mode==='video'?'Video still':'Flat lay'+(vers>1?' #'+(i+1):''),view:fv,ver:i,prompt:(S.mode==='flat'?flatPrompt(p,bgRef):modelPrompt(fv,p,modelRef,bgRef))+tail2(),imgs:idx,aspect,model:pro?'pro':undefined})}
+ else{for(let i=0;i<vers;i++)['front','back','side'].filter(x=>effViews().includes(x)).forEach(view=>jobs.push({label:view.toUpperCase()+(vers>1?' #'+(i+1):''),view,ver:i,prompt:(S.mode==='ghost'?ghostPrompt(view,p,bgRef):modelPrompt(view,p,modelRef,bgRef))+tail2(),imgs:idx,aspect,model:pro?'pro':undefined}))}
  return {arr,jobs};
 }
 
