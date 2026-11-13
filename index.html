@@ -149,7 +149,7 @@ const $=id=>document.getElementById(id);
 const T=(k,w)=>C.ids[k]?`https://lh3.googleusercontent.com/d/${C.ids[k]}=w${w||360}`:'';
 const MODES=[{k:'ghost',e:'👕',t:'Ghost mannequin'},{k:'model',e:'🧍',t:'On a model'},{k:'flat',e:'🪵',t:'Flat lay'},{k:'video',e:'🎬',t:'Video'}];
 const OPT={
- bottoms:['Blue jeans','Bikini bottoms','Tight workout shorts','Leggings (tight)','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
+ bottoms:['Blue jeans','Tight workout shorts','Leggings (tight)','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
  frame:['Full body','Knees up','Waist up','Close-up on the print','Wide shot with scenery'],
  mood:['Natural smile','Big laugh','Serious / confident','Calm / relaxed','Athletic focus','Looking away (no eye contact)'],
  light:['Natural daylight','Golden hour sunset','Bright studio lighting','Soft overcast','Morning light','Moody evening','Night with neon lights','Flash street-style','Backlit sun flare'],
@@ -314,7 +314,7 @@ async function run(fn,...a){let last;for(let i=0;i<3;i++){try{const r=await fetc
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function niceErr(e){const m=(e&&e.message)||String(e);
  if(/OUT_OF_CREDIT/.test(m))return `The studio is out of photo credit. Auto-refill usually adds more within a few minutes — try again shortly. If it keeps happening, <a href="${FAL_BILLING}" target="_blank">tap here to add credit</a>.`;
- if(/content checker|flagged|content policy|could not be processed|safety/i.test(m))return 'The photo service wouldn\'t make this one — its safety checker blocked it (this usually happens with swimwear on a real person). Try a different outfit, like tight workout shorts or leggings.';
+ if(/content checker|flagged|content policy|could not be processed|safety/i.test(m))return 'The photo service wouldn\'t make this one — its safety checker blocked it. Try a different outfit or pose, then press MAKE again.';
  return 'Problem: '+m}
 let busy=false;
 function setStatus(html){$('status').classList.remove('hide');$('status').innerHTML=html}
