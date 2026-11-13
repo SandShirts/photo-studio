@@ -220,7 +220,7 @@ function paint(){
  $('prodPick').innerHTML=tileHTML('Product',p.n,`background-image:url('${T(p.k)}')`,true,"openSheet('product')");
  let h='';
  if(isModel()){const m=MOD[S.model]||MOD.w01,ps=POSE[S.pose];
-  h+=tileHTML('Model',m.real?`${m.person} · ${m.look}`:m.n+(m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,m.real?`openSheet('looks','${String(m.person).replace(/'/g,'')}')`:"openSheet('model')");
+  h+=tileHTML('Model',m.real?`${m.person} · ${m.look}`:m.n+(m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`+(m.real?';background-position:center top':''),false,m.real?`openSheet('looks','${String(m.person).replace(/'/g,'')}')`:"openSheet('model')");
   h+=tileHTML('Pose',ps.n,`background-image:url('${T(ps.k)}')`,false,"openSheet('pose')");}
  const b=curBg();h+=tileHTML('Background',bgName(b),bgStyle(b),false,"openSheet('bg')");
  $('lookPick').innerHTML=h;
@@ -254,7 +254,7 @@ function showTab(t){
  $('shTabs').classList.toggle('hide',Object.keys(SH.tabs).length<2);
  $('shTabs').innerHTML=Object.keys(SH.tabs).map(n=>`<div class="chip${n===t?' on':''}" onclick="showTab('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
  $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;
-  if(i.add||i.addlook)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">${i.add?'Add a real person':'Add a look'}</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
+  if(i.add||i.addlook)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">${i.add?'Add a real person':'Add a look'}</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`+(i.real||i.personTile?';background-position:center top':'');
   return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}" style="position:relative"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div>${i.real?`<button class="rm" data-k="${i.k}" style="position:absolute;bottom:46px;right:6px;background:#fff;border:2px solid var(--warn);color:var(--warn);border-radius:8px;font-weight:bold;padding:2px 8px">Remove</button>`:''}</div>`}).join('');
  $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('rm')){e.stopPropagation();removePersonDlg(e.target.dataset.k);return}const it=SH.tabs[el.dataset.t][+el.dataset.i];if(it.add){addPersonDlg();return}if(it.addlook){addPersonDlg(it.addlook);return}if(it.personTile){openSheet('looks',it.personTile);return}choose(it)});
  $('sheet').querySelector('.body').scrollTop=0;
