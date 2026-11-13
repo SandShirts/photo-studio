@@ -149,7 +149,7 @@ const $=id=>document.getElementById(id);
 const T=(k,w)=>C.ids[k]?`https://lh3.googleusercontent.com/d/${C.ids[k]}=w${w||360}`:'';
 const MODES=[{k:'ghost',e:'👕',t:'Ghost mannequin'},{k:'model',e:'🧍',t:'On a model'},{k:'flat',e:'🪵',t:'Flat lay'},{k:'video',e:'🎬',t:'Video'}];
 const OPT={
- bottoms:['Blue jeans','Tight workout shorts','Leggings (tight)','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
+ bottoms:['Blue jeans','Short workout shorts','Bottoms from this look (real people)','Tight workout shorts','Leggings (tight)','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
  frame:['Full body','Knees up','Waist up','Close-up on the print','Wide shot with scenery'],
  mood:['Natural smile','Big laugh','Serious / confident','Calm / relaxed','Athletic focus','Looking away (no eye contact)'],
  light:['Natural daylight','Golden hour sunset','Bright studio lighting','Soft overcast','Morning light','Moody evening','Night with neon lights','Flash street-style','Backlit sun flare'],
@@ -164,7 +164,7 @@ const POSE={};C.poses.forEach(p=>POSE[p.k]=p);
 // ---------- real people (added from the app, stored in Drive) ----------
 function setPeople(list){
  C.models=C.models.filter(m=>!m.real);
- (list||[]).slice().reverse().forEach(p=>{C.ids[p.k]=p.tile;const m={k:p.k,n:p.n,g:'Real people',d:'the real person '+p.n,real:true,refs:p.refs||[]};MOD[p.k]=m;C.models.unshift(m)});
+ (list||[]).slice().reverse().forEach(p=>{C.ids[p.k]=p.tile;const r=p.refs||[];const m={k:p.k,n:p.look||p.n,person:p.n,look:p.look||'Look 1',g:'Real people',d:'the real person '+p.n,real:true,face:Array.isArray(r)?r.slice(-1):(r.face||[]),body:Array.isArray(r)?r.slice(0,1):(r.body||[])};MOD[p.k]=m;C.models.unshift(m)});
 }
 try{setPeople(JSON.parse(localStorage.getItem('ssPeople')||'[]'))}catch(e){}
 function loadPeople(){return run('listPeople','').then(l=>{window.PEOPLE_LOADED=1;try{localStorage.setItem('ssPeople',JSON.stringify(l))}catch(e){}setPeople(l);fixState();paint();return l}).catch(()=>{})}
@@ -191,7 +191,7 @@ function init(){
  document.querySelectorAll('#outs .chip').forEach(c=>c.onclick=()=>{S.out=c.dataset.o;paint()});
  document.querySelectorAll('.slot').forEach(s=>{s.onclick=e=>{if(e.target.classList.contains('x'))return;pickPhoto(s.dataset.k)};
   s.ondragover=e=>{e.preventDefault();s.style.borderColor='#0b5c8a'};s.ondragleave=()=>s.style.borderColor='';
-  s.ondrop=e=>{e.preventDefault();s.style.borderColor='';const f=e.dataTransfer.files[0];if(f)shrink(f,1600).then(d=>{photos[s.dataset.k]=d;showSlot(s.dataset.k)})};showSlot(s.dataset.k)});
+  s.ondrop=e=>{e.preventDefault();s.style.borderColor='';const f=e.dataTransfer.files[0];if(f)shrink(f,1600).then(d=>{photos[s.dataset.k]=d;showSlot(s.dataset.k);paint()})};showSlot(s.dataset.k)});
  ['vers','aspect'].forEach(k=>$(k).addEventListener('change',paint));
  try{const last=JSON.parse(localStorage.getItem('ssLast')||'null');if(last)S=Object.assign(S,last)}catch(e){}
  fixState();
@@ -220,22 +220,26 @@ function paint(){
  $('prodPick').innerHTML=tileHTML('Product',p.n,`background-image:url('${T(p.k)}')`,true,"openSheet('product')");
  let h='';
  if(isModel()){const m=MOD[S.model]||MOD.w01,ps=POSE[S.pose];
-  h+=tileHTML('Model',m.n+(m.real?' · Real person':m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,"openSheet('model')");
+  h+=tileHTML('Model',m.real?`${m.person} · ${m.look}`:m.n+(m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,m.real?`openSheet('looks','${String(m.person).replace(/'/g,'')}')`:"openSheet('model')");
   h+=tileHTML('Pose',ps.n,`background-image:url('${T(ps.k)}')`,false,"openSheet('pose')");}
  const b=curBg();h+=tileHTML('Background',bgName(b),bgStyle(b),false,"openSheet('bg')");
  $('lookPick').innerHTML=h;
  const n=imgCount(),vid=S.mode==='video';
- $('cost').textContent=vid?'This makes 1 photo + a 5-second video ≈ $0.78':`This makes ${n} photo${n>1?'s':''} ≈ $${(n*0.08).toFixed(2)}${(S.mode!=='flat'&&S.views.length>1&&S.out!=='separate')?' + a free collage':''}`;
+ $('cost').textContent=vid?'This makes 1 photo + a 5-second video ≈ $0.78':`This makes ${n} photo${n>1?'s':''} ≈ $${(n*0.08).toFixed(2)}${(S.mode!=='flat'&&effViews().length>1&&S.out!=='separate')?' + a free collage':''}`;
  remember();
 }
-function imgCount(){const v=+$('vers').value||1;if(S.mode==='flat'||S.mode==='video')return v;return S.views.length*v}
+function imgCount(){const v=+$('vers').value||1;if(S.mode==='flat'||S.mode==='video')return v;return effViews().length*v}
 
 // ---------- picker sheet ----------
 let SH=null;
-function openSheet(kind){
+function openSheet(kind,arg){
  let title,tabs,items,sq=false,sel;
  if(kind==='product'){title='Pick the product';tabs={All:C.products.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sq=true;sel=S.prod}
- else if(kind==='model'){title='Pick a model';tabs={'Real people':[]};C.models.forEach(m=>{(tabs[m.g]=tabs[m.g]||[]).push({k:m.k,n:m.n,img:T(m.k),real:m.real})});tabs['Real people'].push({add:1,n:'+ Add a real person'});sel=S.model}
+ else if(kind==='model'){title='Pick a model';tabs={'Real people':[]};const ppl={};
+  C.models.forEach(m=>{if(m.real){if(!ppl[m.person]){ppl[m.person]={personTile:m.person,n:m.person,img:T(m.k),cnt:0,k:'person:'+m.person};tabs['Real people'].push(ppl[m.person])}ppl[m.person].cnt++;return}(tabs[m.g]=tabs[m.g]||[]).push({k:m.k,n:m.n,img:T(m.k)})});
+  tabs['Real people'].forEach(x=>x.n=`${x.personTile} · ${x.cnt} look${x.cnt>1?'s':''}`);tabs['Real people'].push({add:1,n:'+ Add a real person'});
+  sel=MOD[S.model]&&MOD[S.model].real?'person:'+MOD[S.model].person:S.model}
+ else if(kind==='looks'){const who=arguments[1];title=`Pick ${who}'s look`;tabs={Looks:C.models.filter(m=>m.real&&m.person===who).map(m=>({k:m.k,n:m.look,img:T(m.k),real:1}))};tabs.Looks.push({addlook:who});sel=S.model}
  else if(kind==='pose'){title='Pick a pose';tabs={All:C.poses.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sel=S.pose}
  else{title='Pick a background';tabs={};const colors=C.colors.map(c=>({c:c[0],n:c[0],sw:c[1]}));
   if(isModel()){tabs.Colors=colors;Object.entries(C.bgModel).forEach(([c,l])=>tabs[c]=l.map(b=>({k:b.k,n:b.n,img:T(b.k)})))}
@@ -250,20 +254,20 @@ function showTab(t){
  $('shTabs').classList.toggle('hide',Object.keys(SH.tabs).length<2);
  $('shTabs').innerHTML=Object.keys(SH.tabs).map(n=>`<div class="chip${n===t?' on':''}" onclick="showTab('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
  $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;
-  if(i.add)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">Add a real person</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
+  if(i.add||i.addlook)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">${i.add?'Add a real person':'Add a look'}</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
   return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}" style="position:relative"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div>${i.real?`<button class="rm" data-k="${i.k}" style="position:absolute;bottom:46px;right:6px;background:#fff;border:2px solid var(--warn);color:var(--warn);border-radius:8px;font-weight:bold;padding:2px 8px">Remove</button>`:''}</div>`}).join('');
- $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('rm')){e.stopPropagation();removePersonDlg(e.target.dataset.k);return}const it=SH.tabs[el.dataset.t][+el.dataset.i];if(it.add){addPersonDlg();return}choose(it)});
+ $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('rm')){e.stopPropagation();removePersonDlg(e.target.dataset.k);return}const it=SH.tabs[el.dataset.t][+el.dataset.i];if(it.add){addPersonDlg();return}if(it.addlook){addPersonDlg(it.addlook);return}if(it.personTile){openSheet('looks',it.personTile);return}choose(it)});
  $('sheet').querySelector('.body').scrollTop=0;
 }
 function choose(i){const k=SH.kind;
- if(k==='product')S.prod=i.k;else if(k==='model')S.model=i.k;else if(k==='pose')S.pose=i.k;else S.bg[bgSlot()]=i.c?{c:i.c}:{k:i.k};
+ if(k==='product')S.prod=i.k;else if(k==='model'||k==='looks')S.model=i.k;else if(k==='pose')S.pose=i.k;else S.bg[bgSlot()]=i.c?{c:i.c}:{k:i.k};
  closeSheet();paint()}
 function closeSheet(){$('sheet').classList.add('hide');document.body.style.overflow=''}
 
 // ---------- photos ----------
-function pickPhoto(k){const f=$('file');f.value='';f.onchange=()=>{const file=f.files[0];if(!file)return;shrink(file,1600).then(d=>{photos[k]=d;showSlot(k)})};f.click()}
+function pickPhoto(k){const f=$('file');f.value='';f.onchange=()=>{const file=f.files[0];if(!file)return;shrink(file,1600).then(d=>{photos[k]=d;showSlot(k);paint()})};f.click()}
 function showSlot(k){const s=document.querySelector(`.slot[data-k="${k}"]`);const nm=k==='side'?'SIDE / DETAIL':k.toUpperCase();
- s.innerHTML=photos[k]?`<img src="${photos[k]}"><b>${nm}</b><button class="x" onclick="photos['${k}']=null;showSlot('${k}')">✕</button>`:`<b>${nm}</b><small>tap to add${k==='front'?' (required)':' (optional)'}</small>`}
+ s.innerHTML=photos[k]?`<img src="${photos[k]}"><b>${nm}</b><button class="x" onclick="photos['${k}']=null;showSlot('${k}');paint()">✕</button>`:`<b>${nm}</b><small>tap to add${k==='side'?' (optional)':''}</small>`}
 function shrink(file,max){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height,s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.88))};im.src=r.result};r.readAsDataURL(file)})}
 
 // ---------- prompts ----------
@@ -283,29 +287,35 @@ function ghostPrompt(view,p,bgRef){
  const lt=v('light');
  return `Professional e-commerce ghost mannequin product photo of this exact ${n} (${shape}) ${where}.`+(lt==='Natural daylight'||lt==='Bright studio lighting'?'':` Lighting: ${lt.toLowerCase()}.`)+` ${vw}`;
 }
+function bottomsText(m){const b=v('bottoms');
+ if(b==='Short workout shorts')return 'short, tight athletic workout shorts (short gym shorts, not long bike shorts)';
+ if(b.startsWith('Bottoms from this look'))return m&&m.real?'the exact same bottoms the person is wearing in the full-length BODY reference photos (same style, color, length and fit)':'short, tight athletic workout shorts';
+ return b.toLowerCase()}
 function modelPrompt(view,p,modelRef,bgRef){
  const n=p.pn,m=MOD[S.model],b=curBg(),grp=m.g==='Groups';
  const vw={front:'Front view, the front print fully visible.',back:'Back view: turned away from the camera so the back of the garment is fully visible.'+(photos.back?' The back must match the BACK product photo exactly.':' No BACK photo was provided, so the back of the garment is plain fabric with NO print or graphic.'),side:'Side / three-quarter view.'}[view];
- const who=m.real?`the exact same real person shown in reference images ${modelRef} — identical face, hair, skin tone and their real body shape and proportions`:grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
+ const who=m.real?`the real person shown in reference images ${modelRef}. Copy the face exactly from the FACE close-ups — the same facial features, eyes, nose, lips, jawline, skin, hair and makeup — so she is clearly recognizable as the same person. Copy her real body shape, figure and proportions exactly from the full-length BODY photos, including how her body looks from the side and from behind. Do not slim, reshape, smooth or idealize her face or body`:grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
  const verb=p.g==='hat'||p.g==='apparel'||p.g==='bottom'?'wearing':p.g==='socks'?'wearing, with sneakers and shorts,':p.g==='bag'?'carrying':'holding';
- const bottoms=p.g==='apparel'?`, paired with ${v('bottoms').toLowerCase()}`:'';
+ const bottoms=p.g==='apparel'?`, paired with ${bottomsText(m)}`:'';
  const where=b.c?`a clean ${b.c.toLowerCase()} seamless studio backdrop`:`the location shown in reference image ${bgRef} (${BGI[b.k].p})`;
- return `Photorealistic lifestyle fashion photo of ${who}, ${grp?'all ':''}${verb} this exact ${n}${bottoms}. Ignore the clothes the person is wearing in the person reference photos — dress them in the product instead. Pose: ${POSE[S.pose].p}${view==='back'?' (turned so the back faces the camera)':''}. Expression: ${v('mood').toLowerCase()}. ${vw} Framing: ${v('frame').toLowerCase()}. Setting: ${where}. Lighting: ${v('light').toLowerCase()}. The ${n} fits naturally and realistically.`;
+ return `Photorealistic lifestyle fashion photo of ${who}, ${grp?'all ':''}${verb} this exact ${n}${bottoms}. Ignore the tops the person is wearing in the person reference photos — dress them in the product instead. Pose: ${POSE[S.pose].p}${view==='back'?' (turned so the back faces the camera)':''}. Expression: ${v('mood').toLowerCase()}. ${vw} Framing: ${v('frame').toLowerCase()}. Setting: ${where}. Lighting: ${v('light').toLowerCase()}. The ${n} fits naturally and realistically.`;
 }
 function flatPrompt(p,bgRef){const b=curBg();const where=b.c?`a plain ${b.c.toLowerCase()} surface`:`the surface shown in reference image ${bgRef} (${BGI[b.k].p})`;
  return `Professional styled flat-lay product photo of this exact ${p.pn}, laid out neatly and wrinkle-free, shot from directly above, on ${where}. Lighting: ${v('light').toLowerCase()}.`}
 
+function effViews(){const has=['front','back','side'].filter(k=>photos[k]);if(photos.front)return S.views;const v=S.views.filter(x=>photos[x]);return v.length?v:has}
 function buildJobs(){
  const p=PROD[S.prod];const keys=['front','back','side'].filter(k=>photos[k]);
  const arr=keys.map(k=>photos[k]);const refs=keys.map(k=>`the ${k.toUpperCase()} of the product`);
  let modelRef=0,bgRef=0;
- if(isModel()){const m=MOD[S.model];arr.push('drive:'+C.ids[S.model]);refs.push(m.real?'the MODEL, a real person (studio photo)':'the MODEL (person/people) to use');modelRef=arr.length;
-  if(m.real){(m.refs||[]).slice(0,2).forEach(id=>{arr.push('drive:'+id);refs.push('the same real person (real photo of their face and body)')});modelRef=m.refs&&m.refs.length?`${modelRef} to ${arr.length}`:modelRef}}
+ if(isModel()){const m=MOD[S.model];
+  if(m.real){const a=arr.length+1;m.face.slice(0,3).forEach(id=>{arr.push('drive:'+id);refs.push('a close-up of the real person\'s FACE')});m.body.slice(0,4).forEach(id=>{arr.push('drive:'+id);refs.push('a full-length photo of the real person\'s BODY')});modelRef=`${a} to ${arr.length}`}
+  else{arr.push('drive:'+C.ids[S.model]);refs.push('the MODEL (person/people) to use');modelRef=arr.length}}
  const b=curBg();if(b.k){arr.push('drive:'+C.ids[b.k]);refs.push(isModel()?'the BACKGROUND LOCATION (empty scene)':S.mode==='flat'?'the SURFACE to lay the product on':'the BACKDROP');bgRef=arr.length}
  const idx=arr.map((x,i)=>i);const extra=v('extra').trim();const tail=refLine(refs)+(extra?' Also: '+extra+'.':'')+keepLine();
  const vers=+v('vers')||1,aspect=v('aspect');const jobs=[];
- if(S.mode==='flat'||S.mode==='video'){for(let i=0;i<(S.mode==='video'?1:vers);i++)jobs.push({label:S.mode==='video'?'Video still':'Flat lay'+(vers>1?' #'+(i+1):''),view:'front',ver:i,prompt:(S.mode==='flat'?flatPrompt(p,bgRef):modelPrompt('front',p,modelRef,bgRef))+tail,imgs:idx,aspect})}
- else{for(let i=0;i<vers;i++)['front','back','side'].filter(x=>S.views.includes(x)).forEach(view=>jobs.push({label:view.toUpperCase()+(vers>1?' #'+(i+1):''),view,ver:i,prompt:(S.mode==='ghost'?ghostPrompt(view,p,bgRef):modelPrompt(view,p,modelRef,bgRef))+tail,imgs:idx,aspect}))}
+ if(S.mode==='flat'||S.mode==='video'){const fv=photos.front?'front':(effViews()[0]||'front');for(let i=0;i<(S.mode==='video'?1:vers);i++)jobs.push({label:S.mode==='video'?'Video still':'Flat lay'+(vers>1?' #'+(i+1):''),view:fv,ver:i,prompt:(S.mode==='flat'?flatPrompt(p,bgRef):modelPrompt(fv,p,modelRef,bgRef))+tail,imgs:idx,aspect})}
+ else{for(let i=0;i<vers;i++)['front','back','side'].filter(x=>effViews().includes(x)).forEach(view=>jobs.push({label:view.toUpperCase()+(vers>1?' #'+(i+1):''),view,ver:i,prompt:(S.mode==='ghost'?ghostPrompt(view,p,bgRef):modelPrompt(view,p,modelRef,bgRef))+tail,imgs:idx,aspect}))}
  return {arr,jobs};
 }
 
@@ -325,7 +335,7 @@ async function submitAndWait(arr,jobs,msg,onProgress){
  return poll(sub,msg,onProgress);
 }
 async function generate(){
- if(busy)return;if(!photos.front){alert2('Add a FRONT photo first.');return}
+ if(busy)return;if(!photos.front&&!photos.back&&!photos.side){alert2('Add at least one photo of the product (front, back or side).');return}
  busy=true;$('goBtn').disabled=true;
  const {arr,jobs}=buildJobs();const stamp=new Date().toLocaleString();const mode=S.mode;
  try{
@@ -341,7 +351,7 @@ async function generate(){
   if(mode==='video'){setStatus(waitPic('Photo done — now filming the 5-second video… (1–3 minutes, keep this screen open)'));await makeVideo(good[0].url,group);}
   else{
    const versions=[...new Set(items.map(g=>g.ver||0))];
-   const multi=mode!=='flat'&&S.views.length>1,wantCollage=multi&&S.out!=='separate',wantSep=!multi||S.out!=='collage';
+   const multi=mode!=='flat'&&effViews().length>1,wantCollage=multi&&S.out!=='separate',wantSep=!multi||S.out!=='collage';
    for(const ver of versions){const set=items.filter(g=>(g.ver||0)===ver),okN=set.filter(s=>s.url).length;
     if(wantCollage&&okN>1){setStatus(waitPic('Putting together your collage…'));await addCollage(group,set,ctx,versions.length>1?ver+1:0)}
     set.forEach(g=>{if(wantSep||okN<2||!g.url)addCard(group,g,ctx)})}
@@ -426,14 +436,19 @@ async function makeVideo(url,group,motion,secs){
 function openFolder(){run('folderUrl','').then(u=>{$('modalIn').innerHTML=`<p style="font-size:18px">Your photos folder:</p><a class="btn go" style="display:block;text-align:center;text-decoration:none" href="${u}" target="_blank">Open Google Drive folder</a><div style="height:8px"></div><button class="btn b3" onclick="closeM()">Close</button>`;$('modal').classList.remove('hide')})}
 
 // ---------- add / remove a real person ----------
-function addPersonDlg(){closeSheet();
- $('modalIn').innerHTML=`<h3 style="margin-top:0">Add a real person</h3><label class="l">Name</label><input type="text" id="apName" placeholder="e.g. Steph"><label class="l">Photos of them (1 to 3)</label><p class="note" style="margin:0 0 6px">Best: one full-length photo standing (fitted clothes) and one close-up of the face. Only that person in the photo.</p><input type="file" id="apFiles" accept="image/*" multiple style="font-size:17px"><div style="height:12px"></div><div class="row"><button class="btn go" style="width:auto" id="apGo">Add</button><button class="btn b3" onclick="closeM()">Cancel</button></div><div id="apSt"></div>`;
+function addPersonDlg(person){closeSheet();
+ $('modalIn').innerHTML=`<h3 style="margin-top:0">${person?'Add a look for '+person:'Add a real person'}</h3>
+ ${person?'':'<label class="l">Name</label><input type="text" id="apName" placeholder="e.g. Steph">'}
+ <label class="l">Name this look</label><input type="text" id="apLook" placeholder="e.g. Gym, Curly hair, Night out">
+ <label class="l">Close-ups of the face (1 to 3)</label><p class="note" style="margin:0 0 6px">Clear face, looking at the camera, only this person in the photo, with this look's hair and makeup.</p><input type="file" id="apFace" accept="image/*" multiple style="font-size:17px">
+ <label class="l">Full-length photos (1 to 4)</label><p class="note" style="margin:0 0 6px">Head to feet, fitted clothes. Front, side and back if you have them.</p><input type="file" id="apBody" accept="image/*" multiple style="font-size:17px">
+ <div style="height:12px"></div><div class="row"><button class="btn go" style="width:auto" id="apGo">Add</button><button class="btn b3" onclick="closeM()">Cancel</button></div><div id="apSt"></div>`;
  $('modal').classList.remove('hide');
- $('apGo').onclick=async()=>{const n=$('apName').value.trim(),fs=[...$('apFiles').files].slice(0,3);if(!n||!fs.length){$('apSt').innerHTML='<p class="err">Type a name and choose at least one photo.</p>';return}
+ $('apGo').onclick=async()=>{const n=person||$('apName').value.trim(),look=$('apLook').value.trim()||'Look',fa=[...$('apFace').files].slice(0,3),bo=[...$('apBody').files].slice(0,4);
+  if(!n||!fa.length||!bo.length){$('apSt').innerHTML='<p class="err">Type a name and choose at least one face photo and one full-length photo.</p>';return}
   $('apGo').disabled=true;$('apSt').innerHTML=waitPic('Saving the photos…');
-  try{const ids=[];for(const f of fs){ids.push(await run('savePersonPhoto','',n,await shrink(f,1600)))}
-   const e=await addPersonFromIds(n,ids,msg=>$('apSt').innerHTML=waitPic(msg));
-   closeM();S.model=e.k;setMode(S.mode==='model'||S.mode==='video'?S.mode:'model');alert2(`✔ ${n} was added as a model. They're now in the "Real people" tab on every phone.`)}
+  try{const up=async f=>run('savePersonPhoto','',n+'-'+look,await shrink(f,1600));const face=[],body=[];for(const f of fa)face.push(await up(f));for(const f of bo)body.push(await up(f));
+   const e=await run('addLook','',n,look,body[0],{face,body});await loadPeople();closeM();S.model=e.k;setMode(isModel()?S.mode:'model');alert2(`✔ Added "${look}" for ${n}. It's in the Real people tab on every phone.`)}
   catch(err){$('apSt').innerHTML=`<p class="err">${niceErr(err)}</p>`;$('apGo').disabled=false}};
 }
 async function addPersonFromIds(n,ids,show){
@@ -443,8 +458,8 @@ async function addPersonFromIds(n,ids,show){
  const e=await run('finishPerson','',n,r.url,ids);await loadPeople();return e;
 }
 function removePersonDlg(k){const m=MOD[k];
- $('modalIn').innerHTML=`<p style="font-size:18px">Remove <b>${m.n}</b> from the models?</p><div class="row"><button class="btn b3" id="rmGo">Remove</button><button class="btn b2" onclick="closeM()">Keep</button></div>`;$('modal').classList.remove('hide');
- $('rmGo').onclick=async()=>{await run('removePerson','',k);if(S.model===k)S.model='w01';await loadPeople();closeM();openSheet('model')}}
+ $('modalIn').innerHTML=`<p style="font-size:18px">Remove <b>${m.real?m.person+' · '+m.look:m.n}</b>?</p><div class="row"><button class="btn b3" id="rmGo">Remove</button><button class="btn b2" onclick="closeM()">Keep</button></div>`;$('modal').classList.remove('hide');
+ $('rmGo').onclick=async()=>{await run('removePerson','',k);if(S.model===k)S.model='w01';await loadPeople();closeM();const left=C.models.some(x=>x.real&&x.person===m.person);left?openSheet('looks',m.person):openSheet('model')}}
 
 // ---------- surprise / saved looks ----------
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
