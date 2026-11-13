@@ -83,7 +83,7 @@ details.more summary{font-weight:bold;font-size:18px;color:var(--ocean);cursor:p
 .modal .in{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto}
 .big{max-width:100%;max-height:70vh;display:block;margin:0 auto}
 .err{color:#b42318;font-weight:bold}
-@media(max-width:700px){.modes{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}.slot{min-height:115px}.top h1{font-size:20px}
+@media(max-width:700px){.res{grid-column:auto!important}.modes{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}.slot{min-height:115px}.top h1{font-size:20px}
  .picks{grid-template-columns:repeat(2,1fr)}.tiles{grid-template-columns:repeat(3,1fr);gap:8px}.tile .cap{font-size:13px;padding:5px 3px 7px}}
 </style></head><body>
 
@@ -187,7 +187,16 @@ function init(){
   s.ondrop=e=>{e.preventDefault();s.style.borderColor='';const f=e.dataTransfer.files[0];if(f)shrink(f,1600).then(d=>{photos[s.dataset.k]=d;showSlot(s.dataset.k)})};showSlot(s.dataset.k)});
  ['vers','aspect'].forEach(k=>$(k).addEventListener('change',paint));
  try{const last=JSON.parse(localStorage.getItem('ssLast')||'null');if(last)S=Object.assign(S,last)}catch(e){}
+ fixState();
  loadPresets();setMode(S.mode);
+}
+// if a saved choice no longer exists, fall back to a default instead of breaking the screen
+function fixState(){
+ if(!MODES.some(m=>m.k===S.mode))S.mode='ghost';
+ if(!PROD[S.prod])S.prod='pr-t-shirt';if(!MOD[S.model])S.model='w01';if(!POSE[S.pose])S.pose='p01';
+ const okBg=b=>b&&((b.c&&C.colors.some(c=>c[0]===b.c))||(b.k&&BGI[b.k]&&C.ids[b.k]));
+ S.bg=S.bg||{};if(!okBg(S.bg.model))S.bg.model={c:'Sand'};if(!okBg(S.bg.ghost))S.bg.ghost={c:'White'};if(!okBg(S.bg.flat))S.bg.flat={k:'f-a-light-wood-table'};
+ if(!Array.isArray(S.views)||!S.views.length)S.views=['front','back'];if(!['collage','separate','both'].includes(S.out))S.out='collage';
 }
 function remember(){try{localStorage.setItem('ssLast',JSON.stringify(S))}catch(e){}}
 function setMode(k){S.mode=k;document.querySelectorAll('.mode').forEach(e=>e.classList.toggle('on',e.dataset.k===k));
@@ -354,7 +363,7 @@ async function collage(datas){
  return c.toDataURL('image/jpeg',0.92);
 }
 function cardShell(group,label,src,extraBtns){
- const d=document.createElement('div');d.className='res';
+ const d=document.createElement('div');d.className='res';if(label.startsWith('COLLAGE'))d.style.gridColumn='span 2';
  d.innerHTML=`<div class="t">${label}</div><img src="${src}"><div class="row" style="margin-top:8px"><button class="btn b2 dl">⬇ Download</button><button class="btn b2 vw">🔍 View</button>${extraBtns}</div><div class="note sv">Saving to Drive…</div>`;
  group.querySelector('.gi').appendChild(d);return d}
 function saveTo(d,o,isData){d.querySelector('.sv').textContent='Saving to Drive…';
@@ -420,6 +429,6 @@ function store(){try{return JSON.parse(localStorage.getItem('ssLooks2')||'{}')}c
 function loadPresets(){const s=store();$('presets').innerHTML='<option value="">My saved looks…</option>'+Object.keys(s).map(k=>`<option>${k}</option>`).join('')}
 function savePreset(){$('modalIn').innerHTML=`<label class="l">Name this look</label><input type="text" id="pname" placeholder="e.g. Gym guy on the track"><div style="height:10px"></div><div class="row"><button class="btn go" style="width:auto" id="psave">Save</button><button class="btn b3" onclick="closeM()">Cancel</button></div>`;$('modal').classList.remove('hide');
  $('psave').onclick=()=>{const n=$('pname').value.trim();if(!n)return;const s=store();s[n]={S:JSON.parse(JSON.stringify(S)),...Object.fromEntries(PKEYS.map(k=>[k,v(k)]))};try{localStorage.setItem('ssLooks2',JSON.stringify(s))}catch(e){}loadPresets();closeM()}}
-function loadPreset(){const n=$('presets').value;if(!n)return;const p=store()[n];if(!p)return;S=Object.assign(S,p.S);PKEYS.forEach(k=>{$(k).value=p[k]});setMode(S.mode)}
+function loadPreset(){const n=$('presets').value;if(!n)return;const p=store()[n];if(!p)return;S=Object.assign(S,p.S);fixState();PKEYS.forEach(k=>{$(k).value=p[k]});setMode(S.mode)}
 init();
 </script></body></html>
