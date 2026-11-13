@@ -149,7 +149,7 @@ const $=id=>document.getElementById(id);
 const T=(k,w)=>C.ids[k]?`https://lh3.googleusercontent.com/d/${C.ids[k]}=w${w||360}`:'';
 const MODES=[{k:'ghost',e:'👕',t:'Ghost mannequin'},{k:'model',e:'🧍',t:'On a model'},{k:'flat',e:'🪵',t:'Flat lay'},{k:'video',e:'🎬',t:'Video'}];
 const OPT={
- bottoms:['Blue jeans','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
+ bottoms:['Blue jeans','Bikini bottoms','Tight workout shorts','Leggings (tight)','Black jeans','Ripped jeans','Black athletic shorts','Gray sweat shorts','Joggers','Leggings','Khaki pants','Chino shorts','Denim shorts','Skirt','Board shorts','Cargo pants','Overalls'],
  frame:['Full body','Knees up','Waist up','Close-up on the print','Wide shot with scenery'],
  mood:['Natural smile','Big laugh','Serious / confident','Calm / relaxed','Athletic focus','Looking away (no eye contact)'],
  light:['Natural daylight','Golden hour sunset','Bright studio lighting','Soft overcast','Morning light','Moody evening','Night with neon lights','Flash street-style','Backlit sun flare'],
@@ -161,6 +161,13 @@ const VID_MOTIONS=['Slow 360° turn','Gentle breeze moving the fabric','Model wa
 const PROD={};C.products.forEach(p=>PROD[p.k]=p);
 const MOD={};C.models.forEach(m=>MOD[m.k]=m);
 const POSE={};C.poses.forEach(p=>POSE[p.k]=p);
+// ---------- real people (added from the app, stored in Drive) ----------
+function setPeople(list){
+ C.models=C.models.filter(m=>!m.real);
+ (list||[]).slice().reverse().forEach(p=>{C.ids[p.k]=p.tile;const m={k:p.k,n:p.n,g:'Real people',d:'the real person '+p.n,real:true,refs:p.refs||[]};MOD[p.k]=m;C.models.unshift(m)});
+}
+try{setPeople(JSON.parse(localStorage.getItem('ssPeople')||'[]'))}catch(e){}
+function loadPeople(){return run('listPeople','').then(l=>{window.PEOPLE_LOADED=1;try{localStorage.setItem('ssPeople',JSON.stringify(l))}catch(e){}setPeople(l);fixState();paint();return l}).catch(()=>{})}
 const BGI={};Object.values(C.bgModel).flat().concat(C.textures,Object.values(C.flat).flat()).forEach(b=>BGI[b.k]=b);
 
 let S={mode:'ghost',prod:'pr-t-shirt',views:['front','back'],out:'collage',model:'w01',pose:'p01',
@@ -193,7 +200,7 @@ function init(){
 // if a saved choice no longer exists, fall back to a default instead of breaking the screen
 function fixState(){
  if(!MODES.some(m=>m.k===S.mode))S.mode='ghost';
- if(!PROD[S.prod])S.prod='pr-t-shirt';if(!MOD[S.model])S.model='w01';if(!POSE[S.pose])S.pose='p01';
+ if(!PROD[S.prod])S.prod='pr-t-shirt';if(!MOD[S.model]&&!(String(S.model).startsWith('rp-')&&!window.PEOPLE_LOADED))S.model='w01';if(!POSE[S.pose])S.pose='p01';
  const okBg=b=>b&&((b.c&&C.colors.some(c=>c[0]===b.c))||(b.k&&BGI[b.k]&&C.ids[b.k]));
  S.bg=S.bg||{};if(!okBg(S.bg.model))S.bg.model={c:'Sand'};if(!okBg(S.bg.ghost))S.bg.ghost={c:'White'};if(!okBg(S.bg.flat))S.bg.flat={k:'f-a-light-wood-table'};
  if(!Array.isArray(S.views)||!S.views.length)S.views=['front','back'];if(!['collage','separate','both'].includes(S.out))S.out='collage';
@@ -212,8 +219,8 @@ function paint(){
  const p=PROD[S.prod];
  $('prodPick').innerHTML=tileHTML('Product',p.n,`background-image:url('${T(p.k)}')`,true,"openSheet('product')");
  let h='';
- if(isModel()){const m=MOD[S.model],ps=POSE[S.pose];
-  h+=tileHTML('Model',m.n+(m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,"openSheet('model')");
+ if(isModel()){const m=MOD[S.model]||MOD.w01,ps=POSE[S.pose];
+  h+=tileHTML('Model',m.n+(m.real?' · Real person':m.g==='Groups'?'':` · ${m.g==='Kids'||m.g==='Teens'?m.g.slice(0,-1):m.g==='Women'?'Woman':'Man'}`),`background-image:url('${T(m.k)}')`,false,"openSheet('model')");
   h+=tileHTML('Pose',ps.n,`background-image:url('${T(ps.k)}')`,false,"openSheet('pose')");}
  const b=curBg();h+=tileHTML('Background',bgName(b),bgStyle(b),false,"openSheet('bg')");
  $('lookPick').innerHTML=h;
@@ -228,7 +235,7 @@ let SH=null;
 function openSheet(kind){
  let title,tabs,items,sq=false,sel;
  if(kind==='product'){title='Pick the product';tabs={All:C.products.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sq=true;sel=S.prod}
- else if(kind==='model'){title='Pick a model';tabs={};C.models.forEach(m=>{(tabs[m.g]=tabs[m.g]||[]).push({k:m.k,n:m.n,img:T(m.k)})});sel=S.model}
+ else if(kind==='model'){title='Pick a model';tabs={'Real people':[]};C.models.forEach(m=>{(tabs[m.g]=tabs[m.g]||[]).push({k:m.k,n:m.n,img:T(m.k),real:m.real})});tabs['Real people'].push({add:1,n:'+ Add a real person'});sel=S.model}
  else if(kind==='pose'){title='Pick a pose';tabs={All:C.poses.map(p=>({k:p.k,n:p.n,img:T(p.k)}))};sel=S.pose}
  else{title='Pick a background';tabs={};const colors=C.colors.map(c=>({c:c[0],n:c[0],sw:c[1]}));
   if(isModel()){tabs.Colors=colors;Object.entries(C.bgModel).forEach(([c,l])=>tabs[c]=l.map(b=>({k:b.k,n:b.n,img:T(b.k)})))}
@@ -242,9 +249,10 @@ function openSheet(kind){
 function showTab(t){
  $('shTabs').classList.toggle('hide',Object.keys(SH.tabs).length<2);
  $('shTabs').innerHTML=Object.keys(SH.tabs).map(n=>`<div class="chip${n===t?' on':''}" onclick="showTab('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
- $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
-  return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div></div>`}).join('');
- $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=()=>choose(SH.tabs[el.dataset.t][+el.dataset.i]));
+ $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;
+  if(i.add)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">Add a real person</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
+  return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}" style="position:relative"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div>${i.real?`<button class="rm" data-k="${i.k}" style="position:absolute;top:6px;right:6px;background:#fff;border:2px solid var(--warn);color:var(--warn);border-radius:8px;font-weight:bold;padding:2px 8px">Remove</button>`:''}</div>`}).join('');
+ $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('rm')){e.stopPropagation();removePersonDlg(e.target.dataset.k);return}const it=SH.tabs[el.dataset.t][+el.dataset.i];if(it.add){addPersonDlg();return}choose(it)});
  $('sheet').querySelector('.body').scrollTop=0;
 }
 function choose(i){const k=SH.kind;
@@ -278,11 +286,11 @@ function ghostPrompt(view,p,bgRef){
 function modelPrompt(view,p,modelRef,bgRef){
  const n=p.pn,m=MOD[S.model],b=curBg(),grp=m.g==='Groups';
  const vw={front:'Front view, the front print fully visible.',back:'Back view: turned away from the camera so the back of the garment is fully visible.'+(photos.back?' The back must match the BACK product photo exactly.':' No BACK photo was provided, so the back of the garment is plain fabric with NO print or graphic.'),side:'Side / three-quarter view.'}[view];
- const who=grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
+ const who=m.real?`the exact same real person shown in reference images ${modelRef} — identical face, hair, skin tone and their real body shape and proportions`:grp?`the exact same people shown in reference image ${modelRef} (${m.d}) — same faces, hair, skin tones and body types`:`the exact same person shown in reference image ${modelRef} (${m.d}) — same face, hair, skin tone and body type`;
  const verb=p.g==='hat'||p.g==='apparel'||p.g==='bottom'?'wearing':p.g==='socks'?'wearing, with sneakers and shorts,':p.g==='bag'?'carrying':'holding';
  const bottoms=p.g==='apparel'?`, paired with ${v('bottoms').toLowerCase()}`:'';
  const where=b.c?`a clean ${b.c.toLowerCase()} seamless studio backdrop`:`the location shown in reference image ${bgRef} (${BGI[b.k].p})`;
- return `Photorealistic lifestyle fashion photo of ${who}, ${grp?'all ':''}${verb} this exact ${n}${bottoms}. Ignore the plain white t-shirt and jeans in the person reference — dress them in the product instead. Pose: ${POSE[S.pose].p}${view==='back'?' (turned so the back faces the camera)':''}. Expression: ${v('mood').toLowerCase()}. ${vw} Framing: ${v('frame').toLowerCase()}. Setting: ${where}. Lighting: ${v('light').toLowerCase()}. The ${n} fits naturally and realistically.`;
+ return `Photorealistic lifestyle fashion photo of ${who}, ${grp?'all ':''}${verb} this exact ${n}${bottoms}. Ignore the clothes the person is wearing in the person reference photos — dress them in the product instead. Pose: ${POSE[S.pose].p}${view==='back'?' (turned so the back faces the camera)':''}. Expression: ${v('mood').toLowerCase()}. ${vw} Framing: ${v('frame').toLowerCase()}. Setting: ${where}. Lighting: ${v('light').toLowerCase()}. The ${n} fits naturally and realistically.`;
 }
 function flatPrompt(p,bgRef){const b=curBg();const where=b.c?`a plain ${b.c.toLowerCase()} surface`:`the surface shown in reference image ${bgRef} (${BGI[b.k].p})`;
  return `Professional styled flat-lay product photo of this exact ${p.pn}, laid out neatly and wrinkle-free, shot from directly above, on ${where}. Lighting: ${v('light').toLowerCase()}.`}
@@ -291,7 +299,8 @@ function buildJobs(){
  const p=PROD[S.prod];const keys=['front','back','side'].filter(k=>photos[k]);
  const arr=keys.map(k=>photos[k]);const refs=keys.map(k=>`the ${k.toUpperCase()} of the product`);
  let modelRef=0,bgRef=0;
- if(isModel()){arr.push('drive:'+C.ids[S.model]);refs.push('the MODEL (person/people) to use');modelRef=arr.length}
+ if(isModel()){const m=MOD[S.model];arr.push('drive:'+C.ids[S.model]);refs.push(m.real?'the MODEL, a real person (studio photo)':'the MODEL (person/people) to use');modelRef=arr.length;
+  if(m.real){(m.refs||[]).slice(0,2).forEach(id=>{arr.push('drive:'+id);refs.push('the same real person (real photo of their face and body)')});modelRef=m.refs&&m.refs.length?`${modelRef} to ${arr.length}`:modelRef}}
  const b=curBg();if(b.k){arr.push('drive:'+C.ids[b.k]);refs.push(isModel()?'the BACKGROUND LOCATION (empty scene)':S.mode==='flat'?'the SURFACE to lay the product on':'the BACKDROP');bgRef=arr.length}
  const idx=arr.map((x,i)=>i);const extra=v('extra').trim();const tail=refLine(refs)+(extra?' Also: '+extra+'.':'')+keepLine();
  const vers=+v('vers')||1,aspect=v('aspect');const jobs=[];
@@ -415,6 +424,27 @@ async function makeVideo(url,group,motion,secs){
 }
 function openFolder(){run('folderUrl','').then(u=>{$('modalIn').innerHTML=`<p style="font-size:18px">Your photos folder:</p><a class="btn go" style="display:block;text-align:center;text-decoration:none" href="${u}" target="_blank">Open Google Drive folder</a><div style="height:8px"></div><button class="btn b3" onclick="closeM()">Close</button>`;$('modal').classList.remove('hide')})}
 
+// ---------- add / remove a real person ----------
+function addPersonDlg(){closeSheet();
+ $('modalIn').innerHTML=`<h3 style="margin-top:0">Add a real person</h3><label class="l">Name</label><input type="text" id="apName" placeholder="e.g. Steph"><label class="l">Photos of them (1 to 3)</label><p class="note" style="margin:0 0 6px">Best: one full-length photo standing (fitted clothes) and one close-up of the face. Only that person in the photo.</p><input type="file" id="apFiles" accept="image/*" multiple style="font-size:17px"><div style="height:12px"></div><div class="row"><button class="btn go" style="width:auto" id="apGo">Add</button><button class="btn b3" onclick="closeM()">Cancel</button></div><div id="apSt"></div>`;
+ $('modal').classList.remove('hide');
+ $('apGo').onclick=async()=>{const n=$('apName').value.trim(),fs=[...$('apFiles').files].slice(0,3);if(!n||!fs.length){$('apSt').innerHTML='<p class="err">Type a name and choose at least one photo.</p>';return}
+  $('apGo').disabled=true;$('apSt').innerHTML=waitPic('Saving the photos…');
+  try{const ids=[];for(const f of fs){ids.push(await run('savePersonPhoto','',n,await shrink(f,1600)))}
+   const e=await addPersonFromIds(n,ids,msg=>$('apSt').innerHTML=waitPic(msg));
+   closeM();S.model=e.k;setMode(S.mode==='model'||S.mode==='video'?S.mode:'model');alert2(`✔ ${n} was added as a model. They're now in the "Real people" tab on every phone.`)}
+  catch(err){$('apSt').innerHTML=`<p class="err">${niceErr(err)}</p>`;$('apGo').disabled=false}};
+}
+async function addPersonFromIds(n,ids,show){
+ show&&show('Making the studio picture of '+n+'… (about 30 seconds)');
+ const s=await run('startPerson','',n,ids);if(s.error)throw new Error(s.error);
+ const [r]=await poll([s],null);if(!r.url)throw new Error(r.error||'Could not make the picture');
+ const e=await run('finishPerson','',n,r.url,ids);await loadPeople();return e;
+}
+function removePersonDlg(k){const m=MOD[k];
+ $('modalIn').innerHTML=`<p style="font-size:18px">Remove <b>${m.n}</b> from the models?</p><div class="row"><button class="btn b3" id="rmGo">Remove</button><button class="btn b2" onclick="closeM()">Keep</button></div>`;$('modal').classList.remove('hide');
+ $('rmGo').onclick=async()=>{await run('removePerson','',k);if(S.model===k)S.model='w01';await loadPeople();closeM();openSheet('model')}}
+
 // ---------- surprise / saved looks ----------
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 function surprise(){
@@ -431,4 +461,5 @@ function savePreset(){$('modalIn').innerHTML=`<label class="l">Name this look</l
  $('psave').onclick=()=>{const n=$('pname').value.trim();if(!n)return;const s=store();s[n]={S:JSON.parse(JSON.stringify(S)),...Object.fromEntries(PKEYS.map(k=>[k,v(k)]))};try{localStorage.setItem('ssLooks2',JSON.stringify(s))}catch(e){}loadPresets();closeM()}}
 function loadPreset(){const n=$('presets').value;if(!n)return;const p=store()[n];if(!p)return;S=Object.assign(S,p.S);fixState();PKEYS.forEach(k=>{$(k).value=p[k]});setMode(S.mode)}
 init();
+loadPeople();
 </script></body></html>
