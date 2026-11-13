@@ -251,7 +251,7 @@ function showTab(t){
  $('shTabs').innerHTML=Object.keys(SH.tabs).map(n=>`<div class="chip${n===t?' on':''}" onclick="showTab('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
  $('shTiles').innerHTML=SH.tabs[t].map((i,ix)=>{const id=i.k||i.c;
   if(i.add)return `<div class="tile" data-t="${t}" data-i="${ix}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ocean);background:#e3f2fa">＋</div><div class="cap">Add a real person</div></div>`;const st=i.sw?(i.sw.startsWith('linear')?`background-image:${i.sw}`:`background:${i.sw}`):`background-image:url('${i.img}')`;
-  return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}" style="position:relative"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div>${i.real?`<button class="rm" data-k="${i.k}" style="position:absolute;top:6px;right:6px;background:#fff;border:2px solid var(--warn);color:var(--warn);border-radius:8px;font-weight:bold;padding:2px 8px">Remove</button>`:''}</div>`}).join('');
+  return `<div class="tile${SH.sq?' sq':''}${id===SH.sel?' on':''}" data-t="${t}" data-i="${ix}" style="position:relative"><div class="ph" style="${st}"></div><div class="cap">${i.n}</div>${i.real?`<button class="rm" data-k="${i.k}" style="position:absolute;bottom:46px;right:6px;background:#fff;border:2px solid var(--warn);color:var(--warn);border-radius:8px;font-weight:bold;padding:2px 8px">Remove</button>`:''}</div>`}).join('');
  $('shTiles').querySelectorAll('.tile').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('rm')){e.stopPropagation();removePersonDlg(e.target.dataset.k);return}const it=SH.tabs[el.dataset.t][+el.dataset.i];if(it.add){addPersonDlg();return}choose(it)});
  $('sheet').querySelector('.body').scrollTop=0;
 }
@@ -314,6 +314,7 @@ async function run(fn,...a){let last;for(let i=0;i<3;i++){try{const r=await fetc
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function niceErr(e){const m=(e&&e.message)||String(e);
  if(/OUT_OF_CREDIT/.test(m))return `The studio is out of photo credit. Auto-refill usually adds more within a few minutes — try again shortly. If it keeps happening, <a href="${FAL_BILLING}" target="_blank">tap here to add credit</a>.`;
+ if(/content checker|flagged|content policy|could not be processed|safety/i.test(m))return 'The photo service wouldn\'t make this one — its safety checker blocked it (this usually happens with swimwear on a real person). Try a different outfit, like tight workout shorts or leggings.';
  return 'Problem: '+m}
 let busy=false;
 function setStatus(html){$('status').classList.remove('hide');$('status').innerHTML=html}
